@@ -18,7 +18,7 @@ def exit_clean():
 gateware = 'nb_spectrometer_15_2016_Feb_16_1527'
 
 #ROACH PowerPC Network:
-strRoachIP = 'localhost'
+strRoachIP = 'catseye'
 roachKATCPPort = 7147
 
 #TenGbE Network:
