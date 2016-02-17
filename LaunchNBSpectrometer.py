@@ -15,7 +15,7 @@ def exit_clean():
 ##### Variables to be set ###########
 
 #Gateware to be loaded.a bof should be on the ROACH and a fpg file in the same directory as this script
-gateware = 'nb_spectrometer_15_2016_Feb_12_0935'
+gateware = 'nb_spectrometer_15_2016_Feb_16_1527'
 
 #ROACH PowerPC Network:
 strRoachIP = 'localhost'

@@ -15,7 +15,7 @@ def exit_clean():
 ##### Variables to be set ###########
 
 #Gateware to be loaded.a bof should be on the ROACH and a fpg file in the same directory as this script
-gateware = 'wb_spectrometer_14_2016_Feb_12_0925'
+gateware = 'wb_spectrometer_15_2016_Feb_17_1250'
 
 #ROACH PowerPC Network:
 strRoachIP = 'localhost'
@@ -35,6 +35,9 @@ coarseFFTShiftMask = 2047 #shift all stages.
 
 #Enable calculation of stokes parameters (otherwise complex PFB/FFT output)
 enableStokes = 1;
+
+#The PFB windowing can be bypassed so thay only a FFT is performed for channlising
+bypassPFB = 0;
 
 #How many FFT frames to accumulate for. Note: This is inversely proportional to output rate and time resolution and directly proportional to size of output numbers
 accumulationLength = 3125
@@ -107,6 +110,10 @@ fpga.registers.accumulation_length.write_int(accumulationLength) #Accumulate for
 print '\n---------------------------'
 print 'Enabling/disabling Stokes Parameter Calculation.'
 fpga.registers.stokes_enable.write_int(enableStokes)
+
+print '\n---------------------------'
+print 'Enabling/disabling PFB bypass.'
+fpga.registers.bypass_pfb.write_int(bypassPFB)
 
 print '\n---------------------------'    
 print 'Enabling ADCs and setting attentuation.'
