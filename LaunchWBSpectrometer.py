@@ -49,7 +49,7 @@ bypassPFB = 0;
 #How many FFT frames to accumulate for. Note: This is inversely proportional to output rate and time resolution and directly proportional to size of output numbers
 accumulationLength = 3125
 
-ADCAttenuation = 0
+ADCAttenuation = 63
 
 #Threshold detection for ADC to ensure input signal is in the required range
 lowerADCThreshold = 1000
