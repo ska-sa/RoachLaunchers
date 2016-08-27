@@ -19,7 +19,9 @@ def exit_clean():
 ##### Variables to be set ###########
 
 #Gateware to be loaded.a bof should be on the ROACH and a fpg file in the same directory as this script
-gateware = 'wb_spectrometer_16_2016_Feb_24_1041'
+#gateware = 'wb_spectrometer_16_2016_Feb_24_1041' # Older one, linearity problem.
+gateware = "wb_spectrometer_17_2016_Aug_26_1630" # Newer one, still not linear but high-end problem fixed.
+
 
 #Directory on the ROACH NFS filesystem where bof files are kept. (Assumes this is hosted on this machine.)
 roachGatewareDir = '/srv/roachfs/fs/boffiles'
@@ -47,7 +49,7 @@ enableStokes = 1;
 bypassPFB = 0;
 
 #How many FFT frames to accumulate for. Note: This is inversely proportional to output rate and time resolution and directly proportional to size of output numbers
-accumulationLength = 3125
+accumulationLength = 39062
 
 ADCAttenuation = 63
 
@@ -210,3 +212,5 @@ else:
 
 print '\n---------------------------'
 print 'Done'
+
+
