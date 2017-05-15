@@ -49,6 +49,7 @@ enableStokes = 1;
 bypassPFB = 0;
 
 #How many FFT frames to accumulate for. Note: This is inversely proportional to output rate and time resolution and directly proportional to size of output numbers
+# 39062 is just a touch short of 1 second.
 accumulationLength = 39062
 
 ADCAttenuation = 63
