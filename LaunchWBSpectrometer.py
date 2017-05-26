@@ -214,4 +214,4 @@ else:
 print '\n---------------------------'
 print 'Done'
 
-
+fpga.registers.manual_sync.write(reg="pulse")
