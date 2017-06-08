@@ -26,7 +26,7 @@ gateware = 'nb_spectrometer_17_2016_Sep_15_1321'
 roachGatewareDir = '/srv/roachfs/fs/boffiles'
 
 #ROACH PowerPC Network:
-strRoachIP = 'catseye'
+strRoachIP = 'helix'
 roachKATCPPort = 7147
 
 #TenGbE Network:
@@ -42,13 +42,13 @@ interpacketLength_cycles = 16
 coarseFFTShiftMask = 0
 
 #Select course FFT output channel.
-coarseFFTChannelSelect = 40
+coarseFFTChannelSelect = 128
 
 #Enable calculation of stokes parameters (otherwise complex PFB/FFT output)
 enableStokes = 1;
 
 #How many FFT frames to accumulate for. Note: This is inversely proportional to output rate and time resolution and directly proportional to size of output numbers
-accumulationLength = 10
+accumulationLength = 382
 
 ADCAttenuation = 63
 

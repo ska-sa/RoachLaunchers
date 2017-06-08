@@ -27,7 +27,7 @@ gateware = "wb_spectrometer_17_2016_Aug_26_1630" # Newer one, still not linear b
 roachGatewareDir = '/srv/roachfs/fs/boffiles'
 
 #ROACH PowerPC Network:
-strRoachIP = 'catseye'
+strRoachIP = 'helix'
 roachKATCPPort = 7147
 
 #TenGbE Network:
@@ -49,10 +49,11 @@ enableStokes = 1;
 bypassPFB = 0;
 
 #How many FFT frames to accumulate for. Note: This is inversely proportional to output rate and time resolution and directly proportional to size of output numbers
+<<<<<<< Updated upstream
 # 39062 is just a touch short of 1 second.
-accumulationLength = 39062
+accumulationLength = 3125*125
 
-ADCAttenuation = 63
+ADCAttenuation =40
 
 #Threshold detection for ADC to ensure input signal is in the required range
 lowerADCThreshold = 1000
@@ -165,11 +166,11 @@ fpga.registers.adc_threshold_acc_length.write_int(ADCThresholdAccumLength)
 
 print '\n---------------------------'
 print 'Configuring noise diode.'
-fpga.registers.noise_diode_on_length.write_int(125) #Set noise diode duty-cycle in accumulation windows (note values can't be 0 will default to 1)
-fpga.registers.noise_diode_off_length.write_int(7375)
+fpga.registers.noise_diode_on_length.write_int(1) #Set noise diode duty-cycle in accumulation windows (note values can't be 0 will default to 1)
+fpga.registers.noise_diode_off_length.write_int(12) # One second on, 59 seconds off.
 
-fpga.registers.noise_diode_duty_cycle_en.write_int(1) #Noise diode mode: always on (0) or duty-cycle (1) as set above.
-fpga.registers.noise_diode_en.write_int(1) #Global enabling or disabling of noise diode
+fpga.registers.noise_diode_duty_cycle_en.write_int(0) #Noise diode mode: always on (0) or duty-cycle (1) as set above.
+fpga.registers.noise_diode_en.write_int(0) #Global enabling or disabling of noise diode
 
 print '\n---------------------------'
 print 'Setting RTC and signal board to resync on next PPS pulse...'
