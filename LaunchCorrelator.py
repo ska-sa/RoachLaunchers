@@ -70,11 +70,11 @@ if __name__ == '__main__':
         strRoachIP = args[0]
 
 try:
-    loggers = []
-    lh=casperfpga.log_handlers.DebugLogHandler()
-    logger = logging.getLogger(strRoachIP)
-    logger.addHandler(lh)
-    logger.setLevel(10)
+    #loggers = []
+    #lh=casperfpga.log_handlers.DebugLogHandler()
+    #logger = logging.getLogger(strRoachIP)
+    #logger.addHandler(lh)
+    #logger.setLevel(10)
 
     print '\n---------------------------'
     print 'Checking gateware...'
