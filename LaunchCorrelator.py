@@ -67,12 +67,12 @@ if __name__ == '__main__':
         print 'Please specify a ROACH board. \nExiting.'
         exit()
     else:
-        roach = args[0]
+        strRoachIP = args[0]
 
 try:
     loggers = []
     lh=casperfpga.log_handlers.DebugLogHandler()
-    logger = logging.getLogger(roach)
+    logger = logging.getLogger(strRoachIP)
     logger.addHandler(lh)
     logger.setLevel(10)
 
