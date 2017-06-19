@@ -126,11 +126,11 @@ try:
     fpga.registers.sync_ctrl.write(enable_sync=True, use_self_pps=UseSelfPPS, master_reset="pulse")
     print 'done'
 
-    print "Correlator setup complete. Use TestCorrelator.py to plot output."s
+    print "Correlator setup complete. Use TestCorrelator.py to plot output."
 
 except KeyboardInterrupt:
     exit_clean()
-except:
-    exit_fail()
+#except:
+#    exit_fail()
 
 exit_clean()
