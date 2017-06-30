@@ -27,6 +27,7 @@ strRoachIP = 'catseye'
 roachKATCPPort = 7147
 
 #TenGbE Network:
+#TODO: Fix IP addresses when installed on-site.
 strTGbEDestinationIPBandTop = '10.0.0.4'
 strTGbEDestinationIPBandBtm = '10.0.0.4'
 tGbEDestinationPort = 60000
@@ -37,6 +38,9 @@ RequantGain = 2
 StartChan = 0
 TVGEnable = True
 UseSelfPPS = True
+
+# For test / debug purposes:
+Pause = True
 
 ####################################
 
@@ -87,11 +91,25 @@ fpga.program()
 fpga.get_system_information('%s.fpg' % gateware)
 sys.stdout.flush()
 
-time.sleep(2)
-
+if Pause:
+    print "Pausing as configured:"
+    for i in range(5,0,-1):
+        print i
+        time.sleep(1)
+	sys.stdout.flush()
+ 
 print "\n---------------------------"
 print "Activating ADCs..."
 fpga.registers.adc_ctrl.write(en0=True, atten0=ADCAttenuation, en1=True, atten1=ADCAttenuation)
+
+if Pause:
+    print "Pausing as configured:"
+    for i in range(5,0,-1):
+        print i
+        time.sleep(1)
+	sys.stdout.flush()
+ 
+
 
 print '\n---------------------------'
 print 'Setting TenGbE destination IP / ports...'
@@ -101,7 +119,13 @@ fpga.registers.dest_port_top.write(reg = tGbEDestinationPort)
 fpga.registers.dest_ip_btm.write(reg = tGbEDestinationIPBtm)
 fpga.registers.dest_port_btm.write(reg = tGbEDestinationPort)
 sys.stdout.flush()
-
+if Pause:
+    print "Pausing as configured:"
+    for i in range(5,0,-1):
+        print i
+        time.sleep(1)
+	sys.stdout.flush()
+ 
 print '\n---------------------------'
 print 'Checking 10 Gb Ethernet link state...'
 print "TODO - still need to get this part implemented."
@@ -113,28 +137,55 @@ print "TODO - still need to get this part implemented."
 #	exit_clean()
 #print '10 Gb link is up.'
 #sys.stdout.flush()
-
+if Pause:
+    print "Pausing as configured:"
+    for i in range(5,0,-1):
+        print i
+        time.sleep(1)
+	sys.stdout.flush()
+ 
 print '\n---------------------------'
 print 'Setting FFT shift, requantiser gain and start channel seletion...'
 fpga.registers.dsp_ctrl.write(fft_shift=FFTShift, requant_gain=RequantGain, requant_tvg_en=TVGEnable, band_select=StartChan)
 sys.stdout.flush()
-
-print "\n---------------------------"
-print "Allowing DSP chain a moment to breathe..."
-time.sleep(5)
-sys.stdout.flush()
-
+if Pause:
+    print "Pausing as configured:"
+    for i in range(5,0,-1):
+        print i
+        time.sleep(1)
+	sys.stdout.flush()
+ 
 print "\n---------------------------"
 print "Enabling sync with next PPS..."
 if UseSelfPPS:
     print "WARNING: USING SELF-GENERATED 1PPS SIGNAL. IF AN EXTERNAL 1PPS IS AVAILABLE IT WILL BE IGNORED."
-fpga.registers.sync_ctrl.write(enable_sync=True, use_self_pps=UseSelfPPS)
+fpga.registers.sync_ctrl.write(self_pps=UseSelfPPS)
 sys.stdout.flush()
+
+init_time = 0
+
+if Pause:
+    print "Pausing as configured:"
+    for i in range(5,0,-1):
+        print i
+        time.sleep(1)
+	sys.stdout.flush()
+    print "Arming."
+
+while True:
+    init_time = time.time()
+    fraction = init_time - np.trunc(init_time)
+    if fraction > 0.2 and fraction < 0.5:
+        init_time = int(np.trunc(init_time)) + 2
+        break
+
+fpga.registers.sync_ctrl.write(arm="pulse")
+
 
 print "\n#############################################"
 print "#############################################"
 print "### Note: ROACH initialised at UNIX time: ###"
-print "### ", int(time.time()) + 1, " ###"
+print "### ", int(time.time()), " ###"
 print "#############################################"
 
 
