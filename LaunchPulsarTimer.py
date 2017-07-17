@@ -6,7 +6,7 @@ import time
 import socket as socket
 import struct as struct
 import os.path
-from shutil import copyfile
+#from shutil import copyfile
 import stat
 import numpy as np
 
@@ -28,14 +28,15 @@ roachKATCPPort = 7147
 
 #TenGbE Network:
 #TODO: Fix IP addresses when installed on-site.
-strTGbEDestinationIPBandTop = '10.0.0.4'
-strTGbEDestinationIPBandBtm = '10.0.0.4'
+strTGbEDestinationIPBandTop = '10.0.0.4' # This traffic will originate from 10.0.0.10
+strTGbEDestinationIPBandBtm = '10.0.0.5' # This traffic will originate from 10.0.0.20
 tGbEDestinationPort = 60000
 
+# User Variables
 ADCAttenuation = 10
-FFTShift = 10 # Until further notice.
+FFTShift = 42 # This means 101010 in binary. Should work for now.
 RequantGain = 2
-StartChan = 0
+StartChan = 4
 TVGEnable = True
 UseSelfPPS = True
 
@@ -93,7 +94,7 @@ sys.stdout.flush()
 
 if Pause:
     print "Pausing as configured:"
-    for i in range(5,0,-1):
+    for i in range(3,0,-1):
         print i
         time.sleep(1)
 	sys.stdout.flush()
@@ -104,7 +105,7 @@ fpga.registers.adc_ctrl.write(en0=True, atten0=ADCAttenuation, en1=True, atten1=
 
 if Pause:
     print "Pausing as configured:"
-    for i in range(5,0,-1):
+    for i in range(3,0,-1):
         print i
         time.sleep(1)
 	sys.stdout.flush()
@@ -121,39 +122,27 @@ fpga.registers.dest_port_btm.write(reg = tGbEDestinationPort)
 sys.stdout.flush()
 if Pause:
     print "Pausing as configured:"
-    for i in range(5,0,-1):
+    for i in range(3,0,-1):
         print i
         time.sleep(1)
 	sys.stdout.flush()
  
 print '\n---------------------------'
 print 'Checking 10 Gb Ethernet link state...'
-print "TODO - still need to get this part implemented."
-#time.sleep(2) # Wait 2 seconds for 10GbE link to come up
+time.sleep(2) # Wait 2 seconds for 10GbE link to come up
 
-#bTGbELinkUp = bool(fpga.read_int('tgbe0_linkup'))
-#if not bTGbELinkUp:
-#	print 'Link not detected on 10 GbE port 0. Make sure that the cable is connected to port 0 on the ROACH and to a computer NIC or switch on the other end. Exiting.\n'
-#	exit_clean()
-#print '10 Gb link is up.'
-#sys.stdout.flush()
-if Pause:
-    print "Pausing as configured:"
-    for i in range(5,0,-1):
-        print i
-        time.sleep(1)
-	sys.stdout.flush()
+TGbELinkUp = fpga.registers.ten_gbe_status.read()
+if not (bool(TGbELinkUp["data"]["ten_gbe_0_linkup"]) and bool(TGbELinkUp["data"]["ten_gbe_1_linkup"])):
+	print 'Link not detected on one of the 10 GbE ports. Make sure that CX4 cables are connected to ports 0 and 1 on the ROACH and to the Pulsar Timer NIC. Exiting.\n'
+	#TODO: This needs to be sorted. Can't test this in my current config.
+	#exit_clean()
+print '10 Gb links are up.'
+sys.stdout.flush()
  
 print '\n---------------------------'
 print 'Setting FFT shift, requantiser gain and start channel seletion...'
 fpga.registers.dsp_ctrl.write(fft_shift=FFTShift, requant_gain=RequantGain, requant_tvg_en=TVGEnable, band_select=StartChan)
 sys.stdout.flush()
-if Pause:
-    print "Pausing as configured:"
-    for i in range(5,0,-1):
-        print i
-        time.sleep(1)
-	sys.stdout.flush()
  
 print "\n---------------------------"
 print "Enabling sync with next PPS..."
@@ -164,14 +153,7 @@ sys.stdout.flush()
 
 init_time = 0
 
-if Pause:
-    print "Pausing as configured:"
-    for i in range(5,0,-1):
-        print i
-        time.sleep(1)
-	sys.stdout.flush()
-    print "Arming."
-
+#
 while True:
     init_time = time.time()
     fraction = init_time - np.trunc(init_time)
@@ -182,11 +164,11 @@ while True:
 fpga.registers.sync_ctrl.write(arm="pulse")
 
 
-print "\n#############################################"
-print "#############################################"
-print "### Note: ROACH initialised at UNIX time: ###"
-print "### ", int(time.time()), " ###"
-print "#############################################"
+print "\n########################################"
+print "########################################"
+print "### Note: ROACH synced at UNIX time: ###"
+print "### ", int(time.time()) + 2, " ###"
+print "########################################"
 
 
 print "\n---------------------------"
@@ -201,37 +183,6 @@ if(clkFreq == 200000000):
 else:
   print 'ERROR! Clock frequency is not correct. Check 10 MHz reference and PPS connections.'
 
-
-#TODO: Legacy from Craig's code. Still need to decide how we want to implement this.
-#Important note order of commands: first load time then strobe sync_next_pps. Recommend NTP sync before this if a NTP daemon is not running on this computer.
-#timeNextPPS = int(round((time.time()) + 1) * 1000000) # +1 for next PPS
-#timeLSB = (timeNextPPS & 0x00000000ffffffff)
-#timeMSB = int((timeNextPPS & 0xffffffff00000000) / 2**32)
-
-#fpga.registers.time_lsb.write_int(timeLSB)
-#fpga.registers.time_msb.write_int(timeMSB)
-
-#This should be the last statement of configuration. This will bring the board out of reset state on the next PPS and begin streaming data
-#fpga.registers.sync_next_pps.write_int(1)
-#fpga.registers.sync_next_pps.write_int(0)
-
-# Manual sync just because the GPS-Rb isn't available anymore.
-#fpga.registers.manual_sync.write(reg="pulse")
-
-#print 'Setting RTC time to    ', timeNextPPS, ' us'
-#print 'Waiting 1 s to allow for PPS strobe...'
-#time.sleep(1)
-
-#lastTime = fpga.registers.last_timestamp_msb.read_uint() * 2**32 + fpga.registers.last_timestamp_lsb.read_uint()
-#print 'Last FPGA timestamp was', lastTime, ' us'
-
-#timeDifference = lastTime - timeNextPPS
-
-#print 'Difference is', timeDifference, 'us'
-#if(abs(timeDifference) > 1000000):
-#  print 'Error time is out by > 1 s. Check PPS and clock reference'
-#else:
-#  print 'Offset < 1 s. Time primed correctly.'
 
 # TODO: Still need to do the whole ARP thing for the 10GbE core. Since this is a single link it's not such an issue but for completeness it should be done.
 
