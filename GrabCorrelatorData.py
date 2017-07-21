@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 # from matplotlib.lines import Line2D
 import matplotlib.animation as animation
 import casperfpga
+import struct
 
 strRoachIP = 'catseye'
 roachKATCPPort = 7147
@@ -56,13 +57,13 @@ class SubplotAnimation(animation.TimedAnimation):
         self.line_01_r, = ax_01_ri.plot([], [], color="cyan", label="real")
         self.line_10_r, = ax_10_ri.plot([], [], color="cyan", label="real")
         self.line_11_r, = ax_11_ri.plot([], [], color="cyan", label="real")
-        
+
         self.line_00_i, = ax_00_ri.plot([], [], color="magenta", label="imag")
         self.line_01_i, = ax_01_ri.plot([], [], color="magenta", label="imag")
         self.line_10_i, = ax_10_ri.plot([], [], color="magenta", label="imag")
         self.line_11_i, = ax_11_ri.plot([], [], color="magenta", label="imag")
-        
-        super(SubplotAnimation, self).__init__(self, fig, interval=1000, blit=True)
+
+        animation.TimedAnimation.__init__(self, fig, interval=1000, blit=True)
 
     def _draw_frame(self, framedata):
         p00_r = np.array(struct.unpack(">2048l", self.fpga.read("acc_0x0_real_msb", 8192, 0)))

@@ -13,12 +13,15 @@ import casperfpga
 import time
 import numpy as np
 import sys
+import os.path
+from shutil import copyfile
 import logging
+import stat
 import matplotlib.pyplot as plt
-
+import struct
 
 ##### Variables to be set ###########
-gateware = "pocket_correlator"
+gateware = "holo"
 katcp_port=7147
 
 #Directory on the ROACH NFS filesystem where bof files are kept. (Assumes this is hosted on this machine.)
@@ -27,12 +30,8 @@ roachGatewareDir = '/srv/roachfs/fs/boffiles'
 #ROACH PowerPC Network:
 strRoachIP = 'catseye'
 roachKATCPPort = 7147
-
-ADCAttenuation = 10
-FFTShift = 2**11-1 # Should just be 11 ones.
-RequantGain = 1
-UseSelfPPS = True
-AccumulationLength = (2**28)/1024
+acc_len = 100000
+ADCAttenuation = 2
 
 def exit_fail():
     print 'FAILURE DETECTED. Log entries:\n',lh.printMessages()
@@ -52,29 +51,29 @@ def exit_clean():
 if __name__ == '__main__':
     from optparse import OptionParser
 
-    p = OptionParser()
-    p.set_usage("python " + __file__ + " <ROACH_HOSTNAME_or_IP> [options]")
-    p.set_description(__doc__)
-    p.add_option('-l', '--acc_len', dest='acc_len', type='int',default=AccumulationLength,
-        help='Set the number of vectors to accumulate between dumps. default is (2^28)/1024.')
-    p.add_option('-g', '--gain', dest='gain', type='int',default=RequantGain,
-        help='Set the digital gain (4bit quantisation scalar). default is %d.'%(RequantGain))
-    p.add_option('-s', '--skip', dest='skip', action='store_true',
-        help='Skip reprogramming the FPGA and configuring EQ.')
-    opts, args = p.parse_args(sys.argv[1:])
+    #p = OptionParser()
+    #p.set_usage("python " + __file__ + " <ROACH_HOSTNAME_or_IP> [options]")
+    #p.set_description(__doc__)
+    #p.add_option('-l', '--acc_len', dest='acc_len', type='int',default=AccumulationLength,
+    #    help='Set the number of vectors to accumulate between dumps. default is (2^28)/1024.')
+    #p.add_option('-g', '--gain', dest='gain', type='int',default=RequantGain,
+    #    help='Set the digital gain (4bit quantisation scalar). default is %d.'%(RequantGain))
+    #p.add_option('-s', '--skip', dest='skip', action='store_true',
+    #    help='Skip reprogramming the FPGA and configuring EQ.')
+    #opts, args = p.parse_args(sys.argv[1:])
 
-    if args==[]:
-        print 'Please specify a ROACH board. \nExiting.'
-        exit()
-    else:
-        roach = args[0]
+    #if args==[]:
+    #    print 'Please specify a ROACH board. \nExiting.'
+    #    exit()
+    #else:
+    #    strRoachIP = args[0]
 
 try:
-    loggers = []
-    lh=casperfpga.log_handlers.DebugLogHandler()
-    logger = logging.getLogger(roach)
-    logger.addHandler(lh)
-    logger.setLevel(10)
+    #loggers = []
+    #lh=casperfpga.log_handlers.DebugLogHandler()
+    #logger = logging.getLogger(strRoachIP)
+    #logger.addHandler(lh)
+    #logger.setLevel(10)
 
     print '\n---------------------------'
     print 'Checking gateware...'
@@ -90,7 +89,7 @@ try:
 
     print '\n---------------------------'
     print 'Connecting to FPGA...'
-    fpga = casperfpga.katcp_fpga.KatcpFpga(strRoachIP, roachKATCPPort, timeout=10,logger=logger)
+    fpga = casperfpga.katcp_fpga.KatcpFpga(strRoachIP, roachKATCPPort, timeout=10)
 
     if fpga.is_connected():
     	print 'Connected.'
@@ -108,29 +107,66 @@ try:
     time.sleep(2)
 
     print "\n---------------------------"
-    print "Setting DSP control...."
-    fpga.registers.dsp_ctrl.write(requant_gain=RequantGain, fft_shift=FFTShift)
-
-    print '\n---------------------------'
-    print 'Configuring accumulation period...',
-    fpga.registers.acc_len.write_int(opts.acc_len)
-    print 'done'
-
-    print "\n---------------------------"
     print "Activating ADCs..."
     fpga.registers.adc_ctrl.write(en0=True, atten0=ADCAttenuation, en1=True, atten1=ADCAttenuation)
+    fpga.registers.acc_len.write(reg=acc_len)
+    print "Correlator setup complete."
 
+    #time.sleep(2)
 
-    print "\n---------------------------"
-    print "Resetting board..."
-    fpga.registers.sync_ctrl.write(enable_sync=True, use_self_pps=UseSelfPPS, master_reset="pulse")
-    print 'done'
+    #a_r = np.array(struct.unpack(">2048l", fpga.read("acc_0x0_real_msb", 8192, 0)))
+    #a_i = np.array(struct.unpack(">2048l", fpga.read("acc_0x0_imagl_msb", 8192, 0)))
+    #a = a_r + 1j*a_i
 
-    print "Correlator setup complete. Use TestCorrelator.py to plot output."s
+    #b_r = np.array(struct.unpack(">2048l", fpga.read("acc_1x1_real_msb", 8192, 0)))
+    #b_i = np.array(struct.unpack(">2048l", fpga.read("acc_1x1_imag_msb", 8192, 0)))
+    #b = b_r + 1j*b_i
+
+    #c_r = np.array(struct.unpack(">2048l", fpga.read("acc_0x1_real_msb", 8192, 0)))
+    #c_i = np.array(struct.unpack(">2048l", fpga.read("acc_0x1_imag_msb", 8192, 0)))
+    #c = c_r + 1j*c_i
+
+    #d_r = np.array(struct.unpack(">2048l", fpga.read("acc_1x0_real_msb", 8192, 0)))
+    #d_i = np.array(struct.unpack(">2048l", fpga.read("acc_1x0_imag_msb", 8192, 0)))
+    #d = d_r + 1j*d_i
+
+    #fig = plt.figure(figsize=(12,10))
+    #ax1 = fig.add_subplot(241)
+    #ax1.plot(10*np.log10(np.abs(a)), 'b', label="mag")
+    #ax1.set_ylabel("Magnitude (dB)")
+    #ax11 = ax1.twinx()
+    #ax11.plot(np.degrees(np.angle(a)), 'r', label="phase")
+    #ax11.set_ylabel("Phase (degrees)")
+    #ax1.set_title("0x0")
+
+    #ax2 = fig.add_subplot(242)
+    #ax2.plot(10*np.log10(np.abs(b)), 'b', label="imag")
+    #ax2.set_ylabel("Magnitude (dB)")
+    #ax22 = ax2.twinx()
+    #ax22.plot(np.degrees(np.angle(b)), 'r', label="phase")
+    #ax22.set_ylabel("Phase (degrees)")
+    #ax2.set_title("1x1")
+
+    #ax3 = fig.add_subplot(243)
+    #ax3.plot(10*np.log10(np.abs(c)), 'b', label="mag")
+    #ax3.set_ylabel("Magnitude (dB)")
+    #ax33 = ax3.twinx()
+    #ax33.plot(np.angle(c), 'r', label="phase")
+    #ax33.set_ylabel("Phase (degrees)")
+    #ax3.set_title("0x1")
+
+    #ax4 = fig.add_subplot(244)
+    #ax4.plot(10*np.log10(np.abs(d)), 'b', label="mag")
+    #ax4.set_ylabel("Magnitude (dB)")
+    #ax44 = ax4.twinx()
+    #ax44.plot(np.angle(d), 'r', label="phase")
+    #ax44.set_ylabel("Phase (degrees)")
+    #ax4.set_title("1x0")
+
+    #plt.show()
 
 except KeyboardInterrupt:
     exit_clean()
-except:
-    exit_fail()
+#except:
+#    exit_fail()
 
-exit_clean()
