@@ -82,12 +82,18 @@ class SubplotAnimation(animation.TimedAnimation):
         p10_i = np.array(struct.unpack(">2048l", self.fpga.read("acc_1x0_imag_msb", 8192, 0)))
         p10 = p10_r + 1j*p10_i
 
-        self.line_00_m.set_data(self.f, np.log10(np.abs(p00)))
-        self.line_01_m.set_data(self.f, np.log10(np.abs(p01)))
-        self.line_10_m.set_data(self.f, np.log10(np.abs(p10)))
-        self.line_11_m.set_data(self.f, np.log10(np.abs(p11)))
+        p00_dB = 10 * np.log10(np.abs(p00))
+        p01_dB = 10 * np.log10(np.abs(p01))
+        p10_dB = 10 * np.log10(np.abs(p10))
+        p11_dB = 10 * np.log10(np.abs(p11))
 
-        self.ax_00_m.relim()
+        self.line_00_m.set_data(self.f, p00_dB)
+        self.line_01_m.set_data(self.f, p10_dB)
+        self.line_10_m.set_data(self.f, p01_dB)
+        self.line_11_m.set_data(self.f, p11_dB)
+
+        self.ax_00_m.set_ylim(np.min(p00_dB) - 0.1*(np.max(p00_dB) - np.min(p00_dB)),
+                              np.max(p00_dB) + 0.1*(np.max(p00_dB) - np.min(p00_dB)))
         self.ax_01_m.relim()
         self.ax_10_m.relim()
         self.ax_11_m.relim()
