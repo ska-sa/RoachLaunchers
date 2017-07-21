@@ -43,16 +43,6 @@ class SubplotAnimation(animation.TimedAnimation):
         self.ax_10_ri.set_title("1x0 real/imag")
         self.ax_11_ri.set_title("1x1 real/imag")
 
-        self.ax_00_m.set_xlim(0,2048)
-        self.ax_01_m.set_xlim(0,2048)
-        self.ax_10_m.set_xlim(0,2048)
-        self.ax_11_m.set_xlim(0,2048)
-
-        self.ax_00_ri.set_xlim(0,2048)
-        self.ax_01_ri.set_xlim(0,2048)
-        self.ax_10_ri.set_xlim(0,2048)
-        self.ax_11_ri.set_xlim(0,2048)
-
         self.line_00_m, = self.ax_00_m.plot([], [], color="blue", label="mag")
         self.line_01_m, = self.ax_01_m.plot([], [], color="blue", label="mag")
         self.line_10_m, = self.ax_10_m.plot([], [], color="blue", label="mag")
@@ -110,6 +100,16 @@ class SubplotAnimation(animation.TimedAnimation):
                               np.max(p10_dB) + 0.1*(np.max(p10_dB) - np.min(p10_dB)))
         self.ax_11_m.set_ylim(np.min(p11_dB) - 0.1*(np.max(p11_dB) - np.min(p11_dB)),
                               np.max(p11_dB) + 0.1*(np.max(p11_dB) - np.min(p11_dB)))
+
+        self.ax_00_m.set_xlim(0,2048)
+        self.ax_01_m.set_xlim(0,2048)
+        self.ax_10_m.set_xlim(0,2048)
+        self.ax_11_m.set_xlim(0,2048)
+
+        self.ax_00_ri.set_xlim(0,2048)
+        self.ax_01_ri.set_xlim(0,2048)
+        self.ax_10_ri.set_xlim(0,2048)
+        self.ax_11_ri.set_xlim(0,2048)
 
         self.line_00_p.set_data(self.f, np.degrees(np.angle(p00)))
         self.line_01_p.set_data(self.f, np.degrees(np.angle(p01)))
