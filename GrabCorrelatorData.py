@@ -34,14 +34,34 @@ class SubplotAnimation(animation.TimedAnimation):
         self.ax_11_ri = fig.add_subplot(248)
 
         self.ax_00_m.set_title("0x0 mag/phase")
+        self.ax_00_m.set_xlabel("Channel")
+        self.ax_00_m.set_ylabel("Magnitude (dB)")
+        self.ax_00_p.set_ylabel("Phase (degrees)")
         self.ax_01_m.set_title("0x1 mag/phase")
+        self.ax_01_m.set_xlabel("Channel")
+        self.ax_01_m.set_ylabel("Magnitude (dB)")
+        self.ax_01_p.set_ylabel("Phase (degrees)")
         self.ax_10_m.set_title("1x0 mag/phase")
+        self.ax_10_m.set_xlabel("Channel")
+        self.ax_10_m.set_ylabel("Magnitude (dB)")
+        self.ax_10_p.set_ylabel("Phase (degrees)")
         self.ax_11_m.set_title("1x1 mag/phase")
+        self.ax_11_m.set_xlabel("Channel")
+        self.ax_11_m.set_ylabel("Magnitude (dB)")
+        self.ax_11_p.set_ylabel("Phase (degrees)")
 
         self.ax_00_ri.set_title("0x0 real/imag")
+        self.ax_00_ri.set_xlabel("Channel")
+        self.ax_00_ri.set_ylabel("Value")
         self.ax_01_ri.set_title("0x1 real/imag")
+        self.ax_01_ri.set_xlabel("Channel")
+        self.ax_01_ri.set_ylabel("Value")
         self.ax_10_ri.set_title("1x0 real/imag")
+        self.ax_10_ri.set_xlabel("Channel")
+        self.ax_10_ri.set_ylabel("Value")
         self.ax_11_ri.set_title("1x1 real/imag")
+        self.ax_11_ri.set_xlabel("Channel")
+        self.ax_11_ri.set_ylabel("Value")
 
         self.line_00_m, = self.ax_00_m.plot([], [], color="blue", label="mag")
         self.line_01_m, = self.ax_01_m.plot([], [], color="blue", label="mag")
@@ -63,23 +83,72 @@ class SubplotAnimation(animation.TimedAnimation):
         self.line_10_i, = self.ax_10_ri.plot([], [], color="magenta", label="imag")
         self.line_11_i, = self.ax_11_ri.plot([], [], color="magenta", label="imag")
 
-        animation.TimedAnimation.__init__(self, fig, interval=1000, blit=True)
+        self.ax_00_m.set_xlim(0,2048)
+        self.ax_01_m.set_xlim(0,2048)
+        self.ax_10_m.set_xlim(0,2048)
+        self.ax_11_m.set_xlim(0,2048)
+
+        self.ax_00_ri.set_xlim(0,2048)
+        self.ax_01_ri.set_xlim(0,2048)
+        self.ax_10_ri.set_xlim(0,2048)
+        self.ax_11_ri.set_xlim(0,2048)
+
+        mlim = 200
+        self.ax_00_m.set_ylim(0, mlim)
+        self.ax_01_m.set_ylim(0, mlim)
+        self.ax_10_m.set_ylim(0, mlim)
+        self.ax_11_m.set_ylim(0, mlim)
+
+        plim = 190
+        self.ax_00_p.set_ylim(-plim, plim)
+        self.ax_01_p.set_ylim(-plim, plim)
+        self.ax_10_p.set_ylim(-plim, plim)
+        self.ax_11_p.set_ylim(-plim, plim)
+
+        rilim = 20000
+        self.ax_00_ri.set_ylim(-rilim, rilim)
+        self.ax_01_ri.set_ylim(-rilim, rilim)
+        self.ax_10_ri.set_ylim(-rilim, rilim)
+        self.ax_11_ri.set_ylim(-rilim, rilim)
+
+        animation.TimedAnimation.__init__(self, fig, interval=1010)
 
     def _draw_frame(self, framedata):
-        p00_r = np.array(struct.unpack(">2048l", self.fpga.read("acc_0x0_real_msb", 8192, 0)))
-        p00_i = np.array(struct.unpack(">2048l", self.fpga.read("acc_0x0_imag_msb", 8192, 0)))
+        try:
+            p00_r = np.array(struct.unpack(">2048l", self.fpga.read("acc_0x0_real_msb", 8192, 0)))
+            p00_i = np.array(struct.unpack(">2048l", self.fpga.read("acc_0x0_imag_msb", 8192, 0)))
+        except KatcpRequestFail:
+            print "Couldn't get 00 data."
+            p00_r = np.zeros(2048)
+            p00_i = np.zeros(2048)
         p00 = p00_r + 1j*p00_i
 
-        p11_r = np.array(struct.unpack(">2048l", self.fpga.read("acc_1x1_real_msb", 8192, 0)))
-        p11_i = np.array(struct.unpack(">2048l", self.fpga.read("acc_1x1_imag_msb", 8192, 0)))
+
+        try:
+            p11_r = np.array(struct.unpack(">2048l", self.fpga.read("acc_1x1_real_msb", 8192, 0)))
+            p11_i = np.array(struct.unpack(">2048l", self.fpga.read("acc_1x1_imag_msb", 8192, 0)))
+        except KatcpRequestFail:
+            print "Couldn't get 11 data."
+            p11_r = np.zeros(2048)
+            p11_i = np.zeros(2048)
         p11 = p11_r + 1j*p11_i
 
-        p01_r = np.array(struct.unpack(">2048l", self.fpga.read("acc_0x1_real_msb", 8192, 0)))
-        p01_i = np.array(struct.unpack(">2048l", self.fpga.read("acc_0x1_imag_msb", 8192, 0)))
+        try:
+            p01_r = np.array(struct.unpack(">2048l", self.fpga.read("acc_0x1_real_msb", 8192, 0)))
+            p01_i = np.array(struct.unpack(">2048l", self.fpga.read("acc_0x1_imag_msb", 8192, 0)))
+        except KatcpRequestFail:
+            print "Couldn't get 01 data."
+            p01_r = np.zeros(2048)
+            p01_i = np.zeros(2048)
         p01 = p01_r + 1j*p01_i
 
-        p10_r = np.array(struct.unpack(">2048l", self.fpga.read("acc_1x0_real_msb", 8192, 0)))
-        p10_i = np.array(struct.unpack(">2048l", self.fpga.read("acc_1x0_imag_msb", 8192, 0)))
+        try:
+            p10_r = np.array(struct.unpack(">2048l", self.fpga.read("acc_1x0_real_msb", 8192, 0)))
+            p10_i = np.array(struct.unpack(">2048l", self.fpga.read("acc_1x0_imag_msb", 8192, 0)))
+        except KatcpRequestFail:
+            print "Couldn't get 10 data."
+            p10_r = np.zeros(2048)
+            p10_i = np.zeros(2048)
         p10 = p10_r + 1j*p10_i
 
         p00_dB = 10 * np.log10(np.abs(p00))
@@ -92,34 +161,10 @@ class SubplotAnimation(animation.TimedAnimation):
         self.line_10_m.set_data(self.f, p01_dB)
         self.line_11_m.set_data(self.f, p11_dB)
 
-        self.ax_00_m.set_ylim(np.min(p00_dB) - 0.1*(np.max(p00_dB) - np.min(p00_dB)),
-                              np.max(p00_dB) + 0.1*(np.max(p00_dB) - np.min(p00_dB)))
-        self.ax_01_m.set_ylim(np.min(p01_dB) - 0.1*(np.max(p01_dB) - np.min(p01_dB)),
-                              np.max(p01_dB) + 0.1*(np.max(p01_dB) - np.min(p01_dB)))
-        self.ax_10_m.set_ylim(np.min(p10_dB) - 0.1*(np.max(p10_dB) - np.min(p10_dB)),
-                              np.max(p10_dB) + 0.1*(np.max(p10_dB) - np.min(p10_dB)))
-        self.ax_11_m.set_ylim(np.min(p11_dB) - 0.1*(np.max(p11_dB) - np.min(p11_dB)),
-                              np.max(p11_dB) + 0.1*(np.max(p11_dB) - np.min(p11_dB)))
-
-        self.ax_00_m.set_xlim(0,2048)
-        self.ax_01_m.set_xlim(0,2048)
-        self.ax_10_m.set_xlim(0,2048)
-        self.ax_11_m.set_xlim(0,2048)
-
-        self.ax_00_ri.set_xlim(0,2048)
-        self.ax_01_ri.set_xlim(0,2048)
-        self.ax_10_ri.set_xlim(0,2048)
-        self.ax_11_ri.set_xlim(0,2048)
-
         self.line_00_p.set_data(self.f, np.degrees(np.angle(p00)))
         self.line_01_p.set_data(self.f, np.degrees(np.angle(p01)))
         self.line_10_p.set_data(self.f, np.degrees(np.angle(p10)))
         self.line_11_p.set_data(self.f, np.degrees(np.angle(p11)))
-
-        self.ax_00_p.relim()
-        self.ax_01_p.relim()
-        self.ax_10_p.relim()
-        self.ax_11_p.relim()
 
         self.line_00_r.set_data(self.f, p00_r)
         self.line_01_r.set_data(self.f, p01_r)
@@ -130,11 +175,6 @@ class SubplotAnimation(animation.TimedAnimation):
         self.line_01_i.set_data(self.f, p01_i)
         self.line_10_i.set_data(self.f, p10_i)
         self.line_11_i.set_data(self.f, p11_i)
-
-        self.ax_00_ri.relim()
-        self.ax_01_ri.relim()
-        self.ax_10_ri.relim()
-        self.ax_11_ri.relim()
 
         self._drawn_artists = [self.line_00_m, self.line_01_m, self.line_10_m, self.line_11_m,
                                self.line_00_p, self.line_01_p, self.line_10_p, self.line_11_p,

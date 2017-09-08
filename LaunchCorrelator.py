@@ -30,7 +30,7 @@ roachGatewareDir = '/srv/roachfs/fs/boffiles'
 #ROACH PowerPC Network:
 strRoachIP = 'catseye'
 roachKATCPPort = 7147
-acc_len = 100000
+acc_len = 8137 # This is ever so slightly less than 1 second.
 ADCAttenuation = 2
 
 def exit_fail():
@@ -169,4 +169,3 @@ except KeyboardInterrupt:
     exit_clean()
 #except:
 #    exit_fail()
-
