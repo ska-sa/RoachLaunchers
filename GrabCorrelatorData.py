@@ -1,67 +1,99 @@
 import numpy as np
 import matplotlib.pyplot as plt
-# from matplotlib.lines import Line2D
 import matplotlib.animation as animation
 import casperfpga
 import struct
+import multiprocessing
 
 strRoachIP = 'catseye'
 roachKATCPPort = 7147
 gateware = "holo"
 katcp_port=7147
 
-
 class SubplotAnimation(animation.TimedAnimation):
-    def __init__(self, show_ri=False, figsize=(10,10)):
-
+    def __init__(self, show_ri=False, figsize=(22,12)):
         self.f = np.arange(2048)
         self.fpga = casperfpga.katcp_fpga.KatcpFpga(strRoachIP, roachKATCPPort, timeout=10)
         self.fpga.get_system_information('%s.fpg' % gateware)
-
+        self.show_ri = show_ri
         fig = plt.figure(figsize=figsize)
 
-        self.ax_00_m = fig.add_subplot(241)
+        if self.show_ri:
+            pos_00_mp = 241
+            pos_00_ri = 242
+            pos_01_mp = 243
+            pos_01_ri = 244
+            pos_10_mp = 245
+            pos_10_ri = 246
+            pos_11_mp = 247
+            pos_11_ri = 248
+        else:
+            pos_00_mp = 221
+            pos_01_mp = 222
+            pos_10_mp = 223
+            pos_11_mp = 224
+
+        self.ax_00_m = fig.add_subplot(pos_00_mp)
         self.ax_00_p = self.ax_00_m.twinx()
-        self.ax_00_ri = fig.add_subplot(242)
-        self.ax_01_m = fig.add_subplot(243)
+        if self.show_ri:
+            self.ax_00_ri = fig.add_subplot(pos_00_ri)
+
+        self.ax_01_m = fig.add_subplot(pos_01_mp)
         self.ax_01_p = self.ax_01_m.twinx()
-        self.ax_01_ri = fig.add_subplot(244)
-        self.ax_10_m = fig.add_subplot(245)
+        if self.show_ri:
+            self.ax_01_ri = fig.add_subplot(pos_01_ri)
+
+        self.ax_10_m = fig.add_subplot(pos_10_mp)
         self.ax_10_p = self.ax_10_m.twinx()
-        self.ax_10_ri = fig.add_subplot(246)
-        self.ax_11_m = fig.add_subplot(247)
+        if self.show_ri:
+            self.ax_10_ri = fig.add_subplot(pos_10_ri)
+
+        self.ax_11_m = fig.add_subplot(pos_11_mp)
         self.ax_11_p = self.ax_11_m.twinx()
-        self.ax_11_ri = fig.add_subplot(248)
+        if self.show_ri:
+            self.ax_11_ri = fig.add_subplot(pos_11_ri)
 
         self.ax_00_m.set_title("0x0 mag/phase")
         self.ax_00_m.set_xlabel("Channel")
         self.ax_00_m.set_ylabel("Magnitude (dB)")
+        self.ax_00_m.yaxis.label.set_color("blue")
         self.ax_00_p.set_ylabel("Phase (degrees)")
+        self.ax_00_p.yaxis.label.set_color("red")
+
         self.ax_01_m.set_title("0x1 mag/phase")
         self.ax_01_m.set_xlabel("Channel")
         self.ax_01_m.set_ylabel("Magnitude (dB)")
+        self.ax_01_m.yaxis.label.set_color("blue")
         self.ax_01_p.set_ylabel("Phase (degrees)")
+        self.ax_01_p.yaxis.label.set_color("red")
+
         self.ax_10_m.set_title("1x0 mag/phase")
         self.ax_10_m.set_xlabel("Channel")
         self.ax_10_m.set_ylabel("Magnitude (dB)")
+        self.ax_10_m.yaxis.label.set_color("blue")
         self.ax_10_p.set_ylabel("Phase (degrees)")
+        self.ax_10_p.yaxis.label.set_color("red")
+
         self.ax_11_m.set_title("1x1 mag/phase")
         self.ax_11_m.set_xlabel("Channel")
         self.ax_11_m.set_ylabel("Magnitude (dB)")
+        self.ax_11_m.yaxis.label.set_color("blue")
         self.ax_11_p.set_ylabel("Phase (degrees)")
+        self.ax_11_p.yaxis.label.set_color("red")
 
-        self.ax_00_ri.set_title("0x0 real/imag")
-        self.ax_00_ri.set_xlabel("Channel")
-        self.ax_00_ri.set_ylabel("Value")
-        self.ax_01_ri.set_title("0x1 real/imag")
-        self.ax_01_ri.set_xlabel("Channel")
-        self.ax_01_ri.set_ylabel("Value")
-        self.ax_10_ri.set_title("1x0 real/imag")
-        self.ax_10_ri.set_xlabel("Channel")
-        self.ax_10_ri.set_ylabel("Value")
-        self.ax_11_ri.set_title("1x1 real/imag")
-        self.ax_11_ri.set_xlabel("Channel")
-        self.ax_11_ri.set_ylabel("Value")
+        if self.show_ri:
+            self.ax_00_ri.set_title("0x0 real/imag")
+            self.ax_00_ri.set_xlabel("Channel")
+            self.ax_00_ri.set_ylabel("Value")
+            self.ax_01_ri.set_title("0x1 real/imag")
+            self.ax_01_ri.set_xlabel("Channel")
+            self.ax_01_ri.set_ylabel("Value")
+            self.ax_10_ri.set_title("1x0 real/imag")
+            self.ax_10_ri.set_xlabel("Channel")
+            self.ax_10_ri.set_ylabel("Value")
+            self.ax_11_ri.set_title("1x1 real/imag")
+            self.ax_11_ri.set_xlabel("Channel")
+            self.ax_11_ri.set_ylabel("Value")
 
         self.line_00_m, = self.ax_00_m.plot([], [], color="blue", label="mag")
         self.line_01_m, = self.ax_01_m.plot([], [], color="blue", label="mag")
@@ -73,25 +105,27 @@ class SubplotAnimation(animation.TimedAnimation):
         self.line_10_p, = self.ax_10_p.plot([], [], color="red", label="phase")
         self.line_11_p, = self.ax_11_p.plot([], [], color="red", label="phase")
 
-        self.line_00_r, = self.ax_00_ri.plot([], [], color="cyan", label="real")
-        self.line_01_r, = self.ax_01_ri.plot([], [], color="cyan", label="real")
-        self.line_10_r, = self.ax_10_ri.plot([], [], color="cyan", label="real")
-        self.line_11_r, = self.ax_11_ri.plot([], [], color="cyan", label="real")
+        if self.show_ri:
+            self.line_00_r, = self.ax_00_ri.plot([], [], color="cyan", label="real")
+            self.line_01_r, = self.ax_01_ri.plot([], [], color="cyan", label="real")
+            self.line_10_r, = self.ax_10_ri.plot([], [], color="cyan", label="real")
+            self.line_11_r, = self.ax_11_ri.plot([], [], color="cyan", label="real")
 
-        self.line_00_i, = self.ax_00_ri.plot([], [], color="magenta", label="imag")
-        self.line_01_i, = self.ax_01_ri.plot([], [], color="magenta", label="imag")
-        self.line_10_i, = self.ax_10_ri.plot([], [], color="magenta", label="imag")
-        self.line_11_i, = self.ax_11_ri.plot([], [], color="magenta", label="imag")
+            self.line_00_i, = self.ax_00_ri.plot([], [], color="magenta", label="imag")
+            self.line_01_i, = self.ax_01_ri.plot([], [], color="magenta", label="imag")
+            self.line_10_i, = self.ax_10_ri.plot([], [], color="magenta", label="imag")
+            self.line_11_i, = self.ax_11_ri.plot([], [], color="magenta", label="imag")
 
         self.ax_00_m.set_xlim(0,2048)
         self.ax_01_m.set_xlim(0,2048)
         self.ax_10_m.set_xlim(0,2048)
         self.ax_11_m.set_xlim(0,2048)
 
-        self.ax_00_ri.set_xlim(0,2048)
-        self.ax_01_ri.set_xlim(0,2048)
-        self.ax_10_ri.set_xlim(0,2048)
-        self.ax_11_ri.set_xlim(0,2048)
+        if self.show_ri:
+            self.ax_00_ri.set_xlim(0,2048)
+            self.ax_01_ri.set_xlim(0,2048)
+            self.ax_10_ri.set_xlim(0,2048)
+            self.ax_11_ri.set_xlim(0,2048)
 
         mlim = 200
         self.ax_00_m.set_ylim(0, mlim)
@@ -105,11 +139,12 @@ class SubplotAnimation(animation.TimedAnimation):
         self.ax_10_p.set_ylim(-plim, plim)
         self.ax_11_p.set_ylim(-plim, plim)
 
-        rilim = 20000
-        self.ax_00_ri.set_ylim(-rilim, rilim)
-        self.ax_01_ri.set_ylim(-rilim, rilim)
-        self.ax_10_ri.set_ylim(-rilim, rilim)
-        self.ax_11_ri.set_ylim(-rilim, rilim)
+        if self.show_ri:
+            rilim = 20000
+            self.ax_00_ri.set_ylim(-rilim, rilim)
+            self.ax_01_ri.set_ylim(-rilim, rilim)
+            self.ax_10_ri.set_ylim(-rilim, rilim)
+            self.ax_11_ri.set_ylim(-rilim, rilim)
 
         animation.TimedAnimation.__init__(self, fig, interval=1010)
 
@@ -166,33 +201,45 @@ class SubplotAnimation(animation.TimedAnimation):
         self.line_10_p.set_data(self.f, np.degrees(np.angle(p10)))
         self.line_11_p.set_data(self.f, np.degrees(np.angle(p11)))
 
-        self.line_00_r.set_data(self.f, p00_r)
-        self.line_01_r.set_data(self.f, p01_r)
-        self.line_10_r.set_data(self.f, p10_r)
-        self.line_11_r.set_data(self.f, p11_r)
+        if self.show_ri:
+            self.line_00_r.set_data(self.f, p00_r)
+            self.line_01_r.set_data(self.f, p01_r)
+            self.line_10_r.set_data(self.f, p10_r)
+            self.line_11_r.set_data(self.f, p11_r)
 
-        self.line_00_i.set_data(self.f, p00_i)
-        self.line_01_i.set_data(self.f, p01_i)
-        self.line_10_i.set_data(self.f, p10_i)
-        self.line_11_i.set_data(self.f, p11_i)
+            self.line_00_i.set_data(self.f, p00_i)
+            self.line_01_i.set_data(self.f, p01_i)
+            self.line_10_i.set_data(self.f, p10_i)
+            self.line_11_i.set_data(self.f, p11_i)
 
-        self._drawn_artists = [self.line_00_m, self.line_01_m, self.line_10_m, self.line_11_m,
-                               self.line_00_p, self.line_01_p, self.line_10_p, self.line_11_p,
-                               self.line_00_r, self.line_01_r, self.line_10_r, self.line_11_r,
-                               self.line_00_i, self.line_01_i, self.line_10_i, self.line_11_i]
+
+        if self.show_ri:
+            self._drawn_artists = [self.line_00_m, self.line_01_m, self.line_10_m, self.line_11_m,
+                                   self.line_00_p, self.line_01_p, self.line_10_p, self.line_11_p,
+                                   self.line_00_r, self.line_01_r, self.line_10_r, self.line_11_r,
+                                   self.line_00_i, self.line_01_i, self.line_10_i, self.line_11_i]
+        else:
+            self._drawn_artists = [self.line_00_m, self.line_01_m, self.line_10_m, self.line_11_m,
+                                   self.line_00_p, self.line_01_p, self.line_10_p, self.line_11_p]
 
     def new_frame_seq(self):
         return iter(range(self.f.size))
 
     def _init_draw(self):
-        lines = [self.line_00_m, self.line_01_m, self.line_10_m, self.line_11_m,
-                 self.line_00_p, self.line_01_p, self.line_10_p, self.line_11_p,
-                 self.line_00_r, self.line_01_r, self.line_10_r, self.line_11_r,
-                 self.line_00_i, self.line_01_i, self.line_10_i, self.line_11_i]
+        if self.show_ri:
+            lines = [self.line_00_m, self.line_01_m, self.line_10_m, self.line_11_m,
+                     self.line_00_p, self.line_01_p, self.line_10_p, self.line_11_p,
+                     self.line_00_r, self.line_01_r, self.line_10_r, self.line_11_r,
+                     self.line_00_i, self.line_01_i, self.line_10_i, self.line_11_i]
+        else:
+            lines = [self.line_00_m, self.line_01_m, self.line_10_m, self.line_11_m,
+                     self.line_00_p, self.line_01_p, self.line_10_p, self.line_11_p]
         for l in lines:
             l.set_data([], [])
 
 
 if __name__ == "__main__":
-    ani = SubplotAnimation()
+    receive_pipe, send_pipe = multiprocessing.Pipe(duplex=False)
+
+    ani = SubplotAnimation(show_ri=True)
     plt.show()
