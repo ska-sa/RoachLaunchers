@@ -4,14 +4,19 @@ import matplotlib.animation as animation
 import casperfpga
 import struct
 import multiprocessing
+import time
+import sys
 
 strRoachIP = 'catseye'
 roachKATCPPort = 7147
 gateware = "holo"
 katcp_port=7147
+show_ri = False
+
 
 class SubplotAnimation(animation.TimedAnimation):
-    def __init__(self, show_ri=False, figsize=(22,12)):
+    def __init__(self, send_pipe, show_ri=False, figsize=(22,12)):
+        self.send_pipe = send_pipe
         self.f = np.arange(2048)
         self.fpga = casperfpga.katcp_fpga.KatcpFpga(strRoachIP, roachKATCPPort, timeout=10)
         self.fpga.get_system_information('%s.fpg' % gateware)
@@ -158,7 +163,6 @@ class SubplotAnimation(animation.TimedAnimation):
             p00_i = np.zeros(2048)
         p00 = p00_r + 1j*p00_i
 
-
         try:
             p11_r = np.array(struct.unpack(">2048l", self.fpga.read("acc_1x1_real_msb", 8192, 0)))
             p11_i = np.array(struct.unpack(">2048l", self.fpga.read("acc_1x1_imag_msb", 8192, 0)))
@@ -186,6 +190,8 @@ class SubplotAnimation(animation.TimedAnimation):
             p10_i = np.zeros(2048)
         p10 = p10_r + 1j*p10_i
 
+        self.send_pipe.send((p00, p01, p10, p11))
+
         p00_dB = 10 * np.log10(np.abs(p00))
         p01_dB = 10 * np.log10(np.abs(p01))
         p10_dB = 10 * np.log10(np.abs(p10))
@@ -212,7 +218,6 @@ class SubplotAnimation(animation.TimedAnimation):
             self.line_10_i.set_data(self.f, p10_i)
             self.line_11_i.set_data(self.f, p11_i)
 
-
         if self.show_ri:
             self._drawn_artists = [self.line_00_m, self.line_01_m, self.line_10_m, self.line_11_m,
                                    self.line_00_p, self.line_01_p, self.line_10_p, self.line_11_p,
@@ -222,8 +227,10 @@ class SubplotAnimation(animation.TimedAnimation):
             self._drawn_artists = [self.line_00_m, self.line_01_m, self.line_10_m, self.line_11_m,
                                    self.line_00_p, self.line_01_p, self.line_10_p, self.line_11_p]
 
+
     def new_frame_seq(self):
         return iter(range(self.f.size))
+
 
     def _init_draw(self):
         if self.show_ri:
@@ -238,8 +245,34 @@ class SubplotAnimation(animation.TimedAnimation):
             l.set_data([], [])
 
 
-if __name__ == "__main__":
-    receive_pipe, send_pipe = multiprocessing.Pipe(duplex=False)
+class h5recorder(object):
+    def __init__(self, recv_pipe):
+        self.recv_pipe = recv_pipe
 
-    ani = SubplotAnimation(show_ri=True)
+
+    def record_data(self, recv_pipe):
+        record = True
+        while record:
+            data = recv_pipe.recv()
+            print "Received about %d things in the pipe." % sys.getsizeof(data)
+            if data == None:
+                print "Poison pill received. Stopping..."
+                record = False
+        print "Broken out of while loop. Process stopped."
+
+
+    def run(self):
+        p = multiprocessing.Process(target=self.record_data, args=(self.recv_pipe,))
+        p.start()
+
+
+if __name__ == "__main__":
+    recv_pipe, send_pipe = multiprocessing.Pipe(duplex=False)
+
+    rec = h5recorder(recv_pipe)
+    rec.run()
+
+    ani = SubplotAnimation(send_pipe, show_ri=show_ri)
     plt.show()
+
+    send_pipe.send(None)
