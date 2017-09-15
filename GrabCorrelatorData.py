@@ -6,6 +6,9 @@ import struct
 import multiprocessing
 import time
 import sys
+import h5py
+
+KatcpRequestFail = casperfpga.katcp_fpga.KatcpRequestFail
 
 strRoachIP = 'catseye'
 roachKATCPPort = 7147
@@ -132,7 +135,7 @@ class SubplotAnimation(animation.TimedAnimation):
             self.ax_10_ri.set_xlim(0,2048)
             self.ax_11_ri.set_xlim(0,2048)
 
-        mlim = 200
+        mlim = 60
         self.ax_00_m.set_ylim(0, mlim)
         self.ax_01_m.set_ylim(0, mlim)
         self.ax_10_m.set_ylim(0, mlim)
@@ -252,13 +255,34 @@ class h5recorder(object):
 
     def record_data(self, recv_pipe):
         record = True
+        datafile = h5py.File("%s.h5"%(time.strftime("%Y.%m.%d-%H.%M.%S", time.gmtime())), "w")
+        data_group = datafile.create_group("Data")
+        vis_data = data_group.create_dataset("VisData", (0, 2048, 4, 2), maxshape=(None, 2048, 4, 2), dtype="f4")
+        timestamps = data_group.create_dataset("Timestamps", (0,), maxshape=(None,), dtype="f4")
+        received_data = 0
         while record:
             data = recv_pipe.recv()
-            print "Received about %d things in the pipe." % sys.getsizeof(data)
             if data == None:
                 print "Poison pill received. Stopping..."
                 record = False
+            else:
+                timestamp = time.time()
+                received_data += 1
+                print "Received %d accumulations." % received_data
+                current_size = timestamps.size
+                vis_data.resize((current_size+1, 2048,4,2))
+                vis_data[current_size,:,0,0] = np.real(data[0])
+                vis_data[current_size,:,0,1] = np.imag(data[0])
+                vis_data[current_size,:,1,0] = np.real(data[1])
+                vis_data[current_size,:,1,1] = np.imag(data[1])
+                vis_data[current_size,:,2,0] = np.real(data[2])
+                vis_data[current_size,:,2,1] = np.imag(data[2])
+                vis_data[current_size,:,3,0] = np.real(data[3])
+                vis_data[current_size,:,3,1] = np.imag(data[3])
+                timestamps.resize((current_size+1,))
+                timestamps[current_size] = timestamp
         print "Broken out of while loop. Process stopped."
+        datafile.close()
 
 
     def run(self):
