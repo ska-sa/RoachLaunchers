@@ -131,7 +131,8 @@ print "\n---------------------------"
 print "Enabling sync with next PPS..."
 if UseSelfPPS:
     print "WARNING: USING SELF-GENERATED 1PPS SIGNAL. IF AN EXTERNAL 1PPS IS AVAILABLE IT WILL BE IGNORED."
-fpga.registers.sync_ctrl.write(enable_sync=True, use_self_pps=UseSelfPPS)
+fpga.registers.sync_ctrl.write(self_pps=UseSelfPPS)
+fpga.registers.sync_ctrl.write(arm="pulse")
 sys.stdout.flush()
 
 print "\n#############################################"
