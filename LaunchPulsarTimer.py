@@ -23,7 +23,7 @@ gateware = "pulsar_channeliser"
 roachGatewareDir = '/srv/roachfs/fs/boffiles'
 
 #ROACH PowerPC Network:
-strRoachIP = 'catseye'
+strRoachIP = 'helix'
 roachKATCPPort = 7147
 
 #TenGbE Network:
@@ -39,7 +39,7 @@ FFTShift = 10 # Until further notice.
 RequantGain = 2
 StartChan = 4
 TVGEnable = True
-UseSelfPPS = True
+UseSelfPPS = False
 
 ####################################
 
@@ -120,6 +120,10 @@ print "TODO - still need to get this part implemented."
 print '\n---------------------------'
 print 'Setting FFT shift, requantiser gain and start channel seletion...'
 fpga.registers.dsp_ctrl.write(fft_shift=FFTShift, requant_gain=RequantGain, requant_tvg_en=TVGEnable, band_select=StartChan)
+#fpga.registers.coarse_fft_shift_mask.write_int(FFTShift)
+#fpga.registers.dsp_gain.write_int(RequantGain)
+#fpga.registers.coarse_channel_select.write_int(StartChan)
+#fpga.registers.requant_tvg_en.write_int(TVGEnable)
 sys.stdout.flush()
 
 print "\n---------------------------"
@@ -190,6 +194,3 @@ else:
 
 print '\n---------------------------'
 print 'Done programming and configuring.'
-
-
-
