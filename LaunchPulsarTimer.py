@@ -27,14 +27,17 @@ strRoachIP = 'catseye'
 roachKATCPPort = 7147
 
 #TenGbE Network:
+# Top of the spectrum:
 strTGbEDestinationIPBandTop = '10.0.0.4'
-strTGbEDestinationIPBandBtm = '10.0.0.4'
-tGbEDestinationPort = 60000
+tGbEDestinationPortTop = 60000
+
+strTGbEDestinationIPBandBtm = '10.0.0.5'
+tGbEDestinationPortBtm = 60001
 
 ADCAttenuation = 10
 FFTShift = 10 # Until further notice.
 RequantGain = 2
-StartChan = 0
+StartChan = 4
 TVGEnable = True
 UseSelfPPS = True
 
@@ -97,9 +100,9 @@ print '\n---------------------------'
 print 'Setting TenGbE destination IP / ports...'
 
 fpga.registers.dest_ip_top.write(reg = tGbEDestinationIPTop)
-fpga.registers.dest_port_top.write(reg = tGbEDestinationPort)
+fpga.registers.dest_port_top.write(reg = tGbEDestinationPortTop)
 fpga.registers.dest_ip_btm.write(reg = tGbEDestinationIPBtm)
-fpga.registers.dest_port_btm.write(reg = tGbEDestinationPort)
+fpga.registers.dest_port_btm.write(reg = tGbEDestinationPortBtm)
 sys.stdout.flush()
 
 print '\n---------------------------'
@@ -128,7 +131,8 @@ print "\n---------------------------"
 print "Enabling sync with next PPS..."
 if UseSelfPPS:
     print "WARNING: USING SELF-GENERATED 1PPS SIGNAL. IF AN EXTERNAL 1PPS IS AVAILABLE IT WILL BE IGNORED."
-fpga.registers.sync_ctrl.write(enable_sync=True, use_self_pps=UseSelfPPS)
+fpga.registers.sync_ctrl.write(self_pps=UseSelfPPS)
+fpga.registers.sync_ctrl.write(arm="pulse")
 sys.stdout.flush()
 
 print "\n#############################################"
