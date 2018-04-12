@@ -105,12 +105,34 @@ fpga.registers.dest_ip_btm.write(reg = tGbEDestinationIPBtm)
 fpga.registers.dest_port_btm.write(reg = tGbEDestinationPortBtm)
 sys.stdout.flush()
 
+fpga.tengbes.tengbe0.tap_start(restart=False)
+fpga.tengbes.tengbe1.tap_start(restart=False)
+
+
+#gbe0 = fpga.tengbes['tengbe0'] # This is the top half of the band - 10.0.0.10 sending to 10.0.0.4 on 60000
+#gbe1 = fpga.tengbes['tengbe1'] # This is the bottom half of the band - 10.0.0.20 sending to 10.0.0.5 on 60001
+
+#arp_table = np.ones(256)*0xffffffff
+# These are the MAC addresses on Hebe's NIC
+#arp_table[4] = (0x68<<40 + 0x05<<32 + 0xca<<24 + 0x05<<16 + 0x58<<8 + 0x2e)
+#arp_table[5] = (0x68<<40 + 0x05<<32 + 0xca<<24 + 0x05<<16 + 0x58<<8 + 0x2f)
+# And the corresponding ones on the ROACH
+#arp_table[10] = (0x12<<40 + 0x34<<32 + 0x56<<24 + 0x78<<16)
+#arp_table[20] = (0x12<<40 + 0x34<<32 + 0x56<<24 + 0x78<<16 + 0x01)
+
+#gbe0.set_arp_table(arp_table)
+#gbe1.set_arp_table(arp_table)
+
+#gbe0.setup(arp_table[10], (10<<24 + 10), 60000)
+#gbe1.setup(arp_table[20], (10<<24 + 20), 60000)
+
 print '\n---------------------------'
 print 'Checking 10 Gb Ethernet link state...'
 print "TODO - still need to get this part implemented."
 #time.sleep(2) # Wait 2 seconds for 10GbE link to come up
 
 #bTGbELinkUp = bool(fpga.read_int('tgbe0_linkup'))
+
 #if not bTGbELinkUp:
 #	print 'Link not detected on 10 GbE port 0. Make sure that the cable is connected to port 0 on the ROACH and to a computer NIC or switch on the other end. Exiting.\n'
 #	exit_clean()
