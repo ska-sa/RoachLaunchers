@@ -44,9 +44,6 @@ coarseFFTShiftMask = 0
 #Select course FFT output channel.
 coarseFFTChannelSelect = 40
 
-#Enable calculation of stokes parameters (otherwise complex PFB/FFT output)
-enableStokes = 1;
-
 #How many FFT frames to accumulate for. Note: This is inversely proportional to output rate and time resolution and directly proportional to size of output numbers
 accumulationLength = 10
 
@@ -140,10 +137,6 @@ print 'Setting FFT shift and accumulation length'
 fpga.registers.coarse_fft_shift_mask.write_int(coarseFFTShiftMask) #Shift for each FFT stage (2048 points -> 11 stages. Value is a bit mask so decimal of 11111111111. i.e. 2047)
 fpga.registers.coarse_channel_select.write_int(coarseFFTChannelSelect)
 fpga.registers.accumulation_length.write_int(accumulationLength) #Accumulate for this many FFT frames before outputting
-
-print '\n---------------------------'
-print 'Enabling/disabling Stokes Parameter Calculation.'
-fpga.registers.stokes_enable.write_int(enableStokes)
 
 print '\n---------------------------'
 print 'Enabling ADCs and setting attentuation'

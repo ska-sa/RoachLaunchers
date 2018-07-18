@@ -42,9 +42,6 @@ interpacketLength_cycles = 16
 #FFT shift (With the number in binary each bit represents whether the corresponding stage should right shift once.There are 2048 stages)
 coarseFFTShiftMask = 2047 #shift all stages.
 
-#Enable calculation of stokes parameters (otherwise complex PFB/FFT output)
-enableStokes = 1;
-
 #The PFB windowing can be bypassed so thay only a FFT is performed for channlising
 bypassPFB = 0;
 
@@ -140,10 +137,6 @@ print 'Setting FFT shift and accumulation length.'
 #Setup values for WB spectrum output
 fpga.registers.coarse_fft_shift_mask.write_int(coarseFFTShiftMask) #Shift for each FFT stage (2048 points -> 11 stages. Value is a bit mask so decimal of 11111111111. i.e. 2047)
 fpga.registers.accumulation_length.write_int(accumulationLength) #Accumulate for this many FFT frames before outputting
-
-print '\n---------------------------'
-print 'Enabling/disabling Stokes Parameter Calculation.'
-fpga.registers.stokes_enable.write_int(enableStokes)
 
 print '\n---------------------------'
 print 'Enabling/disabling PFB bypass.'
