@@ -45,7 +45,7 @@ coarseFFTShiftMask = 2047 #shift all stages.
 #How many FFT frames to accumulate for. Note: This is inversely proportional to output rate and time resolution and directly proportional to size of output numbers
 # 39062 is just a touch short of 1 second.
 accumulationLength = 39062
-
+digitalGain = 2
 ADCAttenuation = 63
 
 #Threshold detection for ADC to ensure input signal is in the required range
@@ -142,6 +142,12 @@ fpga.registers.adc0_en.write_int(1)
 fpga.registers.adc1_en.write_int(1)
 fpga.registers.adc0_atten.write_int(ADCAttenuation)
 fpga.registers.adc1_atten.write_int(ADCAttenuation)
+
+print '\n---------------------------'
+print 'Enabling digital gain.'
+#Enable the ADCs
+fpga.registers.digital_gain.write_int(digitalGain)
+fpga.registers.digital_gain.write_int(digitalGain)
 
 print '\n---------------------------'
 print 'Setting up ADC threshold notification.'
