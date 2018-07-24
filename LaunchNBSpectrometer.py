@@ -79,16 +79,12 @@ print ' ADC thres accumulation length	', ADCThresholdAccumLength, '(', ADCThresh
 print '---------------------------'
 
 print '\n---------------------------'
-print 'Checking gateware...'
 if not( roachGatewareDir.endswith('/') ):
   roachGatewareDir += '/'
 
-if os.path.isfile(roachGatewareDir + gateware + '.bof'):
-  print 'Found bof file:', gateware + '.bof'
-else:
-  print 'Copying bof file', gateware + '.bof', 'to NFS (' +  roachGatewareDir + ')'
-  copyfile(gateware + '.bof', roachGatewareDir + gateware + '.bof')
-  os.chmod(roachGatewareDir + gateware + '.bof', stat.S_IXUSR | stat.S_IXGRP |  stat.S_IXOTH)
+print 'Copying bof file', gateware + '.bof', 'to NFS (' +  roachGatewareDir + ')'
+copyfile(gateware + '.bof', roachGatewareDir + gateware + '.bof')
+os.chmod(roachGatewareDir + gateware + '.bof', stat.S_IXUSR | stat.S_IXGRP |  stat.S_IXOTH)
 
 print '\n---------------------------'
 print 'Connecting to FPGA...'
@@ -207,4 +203,3 @@ else:
 
 print '\n---------------------------'
 print 'Done'
-
