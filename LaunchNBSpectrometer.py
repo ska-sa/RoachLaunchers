@@ -84,7 +84,7 @@ if not( roachGatewareDir.endswith('/') ):
 
 print 'Copying bof file', gateware + '.bof', 'to NFS (' +  roachGatewareDir + ')'
 copyfile(gateware + '.bof', roachGatewareDir + gateware + '.bof')
-os.chmod(roachGatewareDir + gateware + '.bof', stat.S_IXUSR | stat.S_IXGRP |  stat.S_IXOTH)
+os.chmod(roachGatewareDir + gateware + '.bof', stat.S_IXUSR | stat.S_IXGRP |  stat.S_IXOTH | stat.S_IRUSR | stat.S_IWUSR)
 
 print '\n---------------------------'
 print 'Connecting to FPGA...'
