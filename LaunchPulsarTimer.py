@@ -17,13 +17,14 @@ def exit_clean():
     sys.exit()
 
 ##### Variables to be set ###########
-gateware = "pulsar_channeliser"
+#gateware = "pulsar_channeliser"
+gateware = "pulsar_channeliser_2018_Apr_17_1353"
 
 #Directory on the ROACH NFS filesystem where bof files are kept. (Assumes this is hosted on this machine.)
 roachGatewareDir = '/srv/roachfs/fs/boffiles'
 
 #ROACH PowerPC Network:
-strRoachIP = 'helix'
+strRoachIP = 'catseye'
 roachKATCPPort = 7147
 
 #TenGbE Network:
@@ -94,7 +95,11 @@ time.sleep(2)
 
 print "\n---------------------------"
 print "Activating ADCs..."
-fpga.registers.adc_ctrl.write(en0=True, atten0=ADCAttenuation, en1=True, atten1=ADCAttenuation)
+#fpga.registers.adc_ctrl.write(en0=True, atten0=ADCAttenuation, en1=True, atten1=ADCAttenuation)
+fpga.registers.adc0_en.write_int(1)
+fpga.registers.adc1_en.write_int(1)
+fpga.registers.adc0_atten.write_int(ADCAttenuation)
+fpga.registers.adc1_atten.write_int(ADCAttenuation)
 
 print '\n---------------------------'
 print 'Setting TenGbE destination IP / ports...'
@@ -141,11 +146,11 @@ print "TODO - still need to get this part implemented."
 
 print '\n---------------------------'
 print 'Setting FFT shift, requantiser gain and start channel seletion...'
-fpga.registers.dsp_ctrl.write(fft_shift=FFTShift, requant_gain=RequantGain, requant_tvg_en=TVGEnable, band_select=StartChan)
-#fpga.registers.coarse_fft_shift_mask.write_int(FFTShift)
-#fpga.registers.dsp_gain.write_int(RequantGain)
-#fpga.registers.coarse_channel_select.write_int(StartChan)
-#fpga.registers.requant_tvg_en.write_int(TVGEnable)
+#fpga.registers.dsp_ctrl.write(fft_shift=FFTShift, requant_gain=RequantGain, requant_tvg_en=TVGEnable, band_select=StartChan)
+fpga.registers.coarse_fft_shift_mask.write_int(FFTShift)
+fpga.registers.digital_gain.write_int(RequantGain)
+fpga.registers.coarse_channel_select.write_int(StartChan)
+fpga.registers.tvg_en.write_int(TVGEnable)
 sys.stdout.flush()
 
 print "\n---------------------------"

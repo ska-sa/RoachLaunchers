@@ -26,7 +26,7 @@ gateware = 'nb_spectrometer_17_2016_Sep_15_1321'
 roachGatewareDir = '/srv/roachfs/fs/boffiles'
 
 #ROACH PowerPC Network:
-strRoachIP = 'helix'
+strRoachIP = 'catseye'
 roachKATCPPort = 7147
 
 #TenGbE Network:
