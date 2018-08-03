@@ -222,7 +222,7 @@ def plot_adc_snap():
     data[3::4] = data3
     data *= 128  # scale up to 8_0
 
-    hist = np.histogram(data, bins=256, range=(-1.0,1.0))
+    hist = np.histogram(data, bins=256, range=(-128, 128))
     plt.plot(hist[1][:-1], hist[0])
     plt.show()
 
