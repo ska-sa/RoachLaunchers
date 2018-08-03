@@ -8,8 +8,7 @@ import struct as struct
 import os.path
 from shutil import copyfile
 import stat
-import numpy as np
-import matplotlib.pyplot as plt
+import numpy as npo
 
 def exit_clean():
     try:
@@ -73,8 +72,8 @@ print ' Interpacket length		', interpacketLength_cycles, ' cycles'
 print ' FFT shift mask			', coarseFFTShiftMask
 print ' Accumulation length		', accumulationLength, '(', 2048 * accumulationLength / 800e3, ' ms integration per output )'
 print ' ADC attenuation			', ADCAttenuation, '(', ADCAttenuation / 2, ' dB )'
-print ' ADC upper threshold		', lowerADCThreshold, '(', 10 * np.log10( powerPerADCValue_mW * lowerADCThreshold / ADCThresholdAccumLength ), ' dBm at ADC input )'
-print ' ADC lower threshold		', upperADCThreshold, '(', 10 * np.log10( powerPerADCValue_mW * upperADCThreshold / ADCThresholdAccumLength ), ' dBm at ADC input )'
+print ' ADC upper threshold		', lowerADCThreshold, '(', 10 * numpy.log10( powerPerADCValue_mW * lowerADCThreshold / ADCThresholdAccumLength ), ' dBm at ADC input )'
+print ' ADC lower threshold		', upperADCThreshold, '(', 10 * numpy.log10( powerPerADCValue_mW * upperADCThreshold / ADCThresholdAccumLength ), ' dBm at ADC input )'
 print ' ADC thres accumulation length	', ADCThresholdAccumLength, '(', ADCThresholdAccumLength / 50, ' dB )'
 print '---------------------------'
 
@@ -222,7 +221,7 @@ def plot_adc_snap():
     data[3::4] = data3
     data *= 128  # scale up to 8_0
 
-    hist = np.histogram(data, bins=256, range=(-1.0,1.0))
+    hist = np.histogram(data, bins=256, range=(-128, 127))
     plt.plot(hist[1][:-1], hist[0])
     plt.show()
 
