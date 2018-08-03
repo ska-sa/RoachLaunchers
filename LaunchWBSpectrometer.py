@@ -8,7 +8,8 @@ import struct as struct
 import os.path
 from shutil import copyfile
 import stat
-import numpy as npo
+import numpy as np
+import matplotlib.pyplot as plt
 
 def exit_clean():
     try:
@@ -72,8 +73,8 @@ print ' Interpacket length		', interpacketLength_cycles, ' cycles'
 print ' FFT shift mask			', coarseFFTShiftMask
 print ' Accumulation length		', accumulationLength, '(', 2048 * accumulationLength / 800e3, ' ms integration per output )'
 print ' ADC attenuation			', ADCAttenuation, '(', ADCAttenuation / 2, ' dB )'
-print ' ADC upper threshold		', lowerADCThreshold, '(', 10 * numpy.log10( powerPerADCValue_mW * lowerADCThreshold / ADCThresholdAccumLength ), ' dBm at ADC input )'
-print ' ADC lower threshold		', upperADCThreshold, '(', 10 * numpy.log10( powerPerADCValue_mW * upperADCThreshold / ADCThresholdAccumLength ), ' dBm at ADC input )'
+print ' ADC upper threshold		', lowerADCThreshold, '(', 10 * np.log10( powerPerADCValue_mW * lowerADCThreshold / ADCThresholdAccumLength ), ' dBm at ADC input )'
+print ' ADC lower threshold		', upperADCThreshold, '(', 10 * np.log10( powerPerADCValue_mW * upperADCThreshold / ADCThresholdAccumLength ), ' dBm at ADC input )'
 print ' ADC thres accumulation length	', ADCThresholdAccumLength, '(', ADCThresholdAccumLength / 50, ' dB )'
 print '---------------------------'
 
