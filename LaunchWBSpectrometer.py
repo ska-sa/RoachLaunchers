@@ -8,7 +8,8 @@ import struct as struct
 import os.path
 from shutil import copyfile
 import stat
-import numpy
+import numpy as np
+import matplotlib.pyplot as plt
 
 def exit_clean():
     try:
@@ -16,12 +17,13 @@ def exit_clean():
     except: pass
     sys.exit()
 
+
 ##### Variables to be set ###########
 
 #Gateware to be loaded.a bof should be on the ROACH and a fpg file in the same directory as this script
 #gateware = 'wb_spectrometer_16_2016_Feb_24_1041' # Older one, linearity problem.
-gateware = "wb_spectrometer" # Newer one, still not linear but high-end problem fixed.
-
+#gateware = "wb_spectrometer" # Newer one, still not linear but high-end problem fixed.
+gateware = "wb_spectrometer_2018_Aug_02_1041"
 
 #Directory on the ROACH NFS filesystem where bof files are kept. (Assumes this is hosted on this machine.)
 roachGatewareDir = '/srv/roachfs/fs/boffiles'
@@ -71,8 +73,8 @@ print ' Interpacket length		', interpacketLength_cycles, ' cycles'
 print ' FFT shift mask			', coarseFFTShiftMask
 print ' Accumulation length		', accumulationLength, '(', 2048 * accumulationLength / 800e3, ' ms integration per output )'
 print ' ADC attenuation			', ADCAttenuation, '(', ADCAttenuation / 2, ' dB )'
-print ' ADC upper threshold		', lowerADCThreshold, '(', 10 * numpy.log10( powerPerADCValue_mW * lowerADCThreshold / ADCThresholdAccumLength ), ' dBm at ADC input )'
-print ' ADC lower threshold		', upperADCThreshold, '(', 10 * numpy.log10( powerPerADCValue_mW * upperADCThreshold / ADCThresholdAccumLength ), ' dBm at ADC input )'
+print ' ADC upper threshold		', lowerADCThreshold, '(', 10 * np.log10( powerPerADCValue_mW * lowerADCThreshold / ADCThresholdAccumLength ), ' dBm at ADC input )'
+print ' ADC lower threshold		', upperADCThreshold, '(', 10 * np.log10( powerPerADCValue_mW * upperADCThreshold / ADCThresholdAccumLength ), ' dBm at ADC input )'
 print ' ADC thres accumulation length	', ADCThresholdAccumLength, '(', ADCThresholdAccumLength / 50, ' dB )'
 print '---------------------------'
 
@@ -203,3 +205,24 @@ print '\n---------------------------'
 print 'Done'
 
 fpga.registers.manual_sync.write(reg="pulse")
+
+
+def plot_adc_snap():
+    fpga.registers.adc_snap_ctrl.write(we=True)
+    adc_snap = fpga.snapshots.adc_snap_ss.read(man_trig=True)
+
+    data0 = np.array(adc_snap["data"]["adc_data0_0"])
+    data1 = np.array(adc_snap["data"]["adc_data0_1"])
+    data2 = np.array(adc_snap["data"]["adc_data0_2"])
+    data3 = np.array(adc_snap["data"]["adc_data0_3"])
+    data = np.empty((data0.size + data1.size + data2.size + data3.size,), dtype=data0.dtype)
+    data[0::4] = data0
+    data[1::4] = data1
+    data[2::4] = data2
+    data[3::4] = data3
+    data *= 128  # scale up to 8_0
+
+    hist = np.histogram(data, bins=256, range=(-1.0,1.0))
+    plt.plot(hist[1][:-1], hist[0])
+    plt.show()
+
