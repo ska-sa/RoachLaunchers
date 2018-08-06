@@ -48,7 +48,7 @@ coarseFFTShiftMask = 2047 #shift all stages.
 # 39062 is just a touch short of 1 second.
 accumulationLength = 39062
 digitalGain = 2
-ADCAttenuation = 63
+ADCAttenuation = 40
 
 #Threshold detection for ADC to ensure input signal is in the required range
 lowerADCThreshold = 1000
@@ -207,10 +207,9 @@ print 'Done'
 fpga.registers.manual_sync.write(reg="pulse")
 
 
-def plot_adc_snap():
+def get_adc_snap():
     fpga.registers.adc_snap_ctrl.write(we=True)
     adc_snap = fpga.snapshots.adc_snap_ss.read(man_trig=True)
-
     data0 = np.array(adc_snap["data"]["adc_data0_0"])
     data1 = np.array(adc_snap["data"]["adc_data0_1"])
     data2 = np.array(adc_snap["data"]["adc_data0_2"])
@@ -220,9 +219,9 @@ def plot_adc_snap():
     data[1::4] = data1
     data[2::4] = data2
     data[3::4] = data3
-    data *= 128  # scale up to 8_0
+    return data
 
-    hist = np.histogram(data, bins=256, range=(-128, 127))
+def plot_histogram(data):
+    hist = np.histogram(data, bins=256)
     plt.plot(hist[1][:-1], hist[0])
     plt.show()
-
