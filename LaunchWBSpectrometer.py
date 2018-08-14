@@ -47,8 +47,8 @@ coarseFFTShiftMask = 2047 #shift all stages.
 #How many FFT frames to accumulate for. Note: This is inversely proportional to output rate and time resolution and directly proportional to size of output numbers
 # 39062 is just a touch short of 1 second.
 accumulationLength = 39062
-digitalGain = 2
-ADCAttenuation = 40
+digitalGain = 256
+ADCAttenuation = 4
 
 #Threshold detection for ADC to ensure input signal is in the required range
 lowerADCThreshold = 1000
@@ -229,7 +229,7 @@ def plot_histogram(data):
 def plot_requant_snap(spectrum_size=1024):
     fpga.registers.requant_snap_ctrl.write(we=True)
 
-    left_snap = fpga.snapshots.requant_left_snap.read()
+    left_snap = fpga.snapshots.requant_left_snap_ss.read()
     left_even = np.array(left_snap["data"]["even_real"]) + 1j*np.array(left_snap["data"]["even_imag"])
     left_odd = np.array(left_snap["data"]["odd_real"]) + 1j*np.array(left_snap["data"]["odd_imag"])
     left_data = np.empty((left_even.size + left_odd.size,), dtype=np.complex)
@@ -239,7 +239,7 @@ def plot_requant_snap(spectrum_size=1024):
     for i in range(0, left_data.size/spectrum_size, spectrum_size):
         left_accum += left_data[i:i+spectrum_size]
 
-    right_snap = fpga.snapshots.requant_right_snap.read()
+    right_snap = fpga.snapshots.requant_right_snap_ss.read()
     right_even = np.array(right_snap["data"]["even_real"]) + 1j*np.array(right_snap["data"]["even_imag"])
     right_odd = np.array(right_snap["data"]["odd_real"]) + 1j*np.array(right_snap["data"]["odd_imag"])
     right_data = np.empty((right_even.size + right_odd.size,), dtype=np.complex)
