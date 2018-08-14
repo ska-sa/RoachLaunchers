@@ -226,28 +226,30 @@ def plot_histogram(data):
     plt.plot(hist[1][:-1], hist[0])
     plt.show()
 
-def plot_requant_snap(spectrum_size=1024):
+def plot_requant_snap(number_of_snaps = 1, spectrum_size=1024):
     fpga.registers.requant_snap_ctrl.write(we=True)
 
-    left_snap = fpga.snapshots.requant_left_snap_ss.read()
-    left_even = np.array(left_snap["data"]["even_real"]) + 1j*np.array(left_snap["data"]["even_imag"])
-    left_odd = np.array(left_snap["data"]["odd_real"]) + 1j*np.array(left_snap["data"]["odd_imag"])
-    left_data = np.empty((left_even.size + left_odd.size,), dtype=np.complex)
-    left_data[0::2] = left_even
-    left_data[1::2] = left_odd
     left_accum = np.empty((spectrum_size,), dtype=np.complex)
-    for i in range(0, left_data.size/spectrum_size, spectrum_size):
-        left_accum += left_data[i:i+spectrum_size]
-
-    right_snap = fpga.snapshots.requant_right_snap_ss.read()
-    right_even = np.array(right_snap["data"]["even_real"]) + 1j*np.array(right_snap["data"]["even_imag"])
-    right_odd = np.array(right_snap["data"]["odd_real"]) + 1j*np.array(right_snap["data"]["odd_imag"])
-    right_data = np.empty((right_even.size + right_odd.size,), dtype=np.complex)
-    right_data[0::2] = right_even
-    right_data[1::2] = right_odd
     right_accum = np.empty((spectrum_size,), dtype=np.complex)
-    for i in range(0, right_data.size/spectrum_size, spectrum_size):
-        right_accum += right_data[i:i+spectrum_size]
+
+    for snap_no in range(number_of_snaps):
+        left_snap = fpga.snapshots.requant_left_snap_ss.read()
+        left_even = np.array(left_snap["data"]["even_real"]) + 1j*np.array(left_snap["data"]["even_imag"])
+        left_odd = np.array(left_snap["data"]["odd_real"]) + 1j*np.array(left_snap["data"]["odd_imag"])
+        left_data = np.empty((left_even.size + left_odd.size,), dtype=np.complex)
+        left_data[0::2] = left_even
+        left_data[1::2] = left_odd
+        for i in range(0, left_data.size/spectrum_size, spectrum_size):
+            left_accum += left_data[i:i+spectrum_size]
+
+        right_snap = fpga.snapshots.requant_right_snap_ss.read()
+        right_even = np.array(right_snap["data"]["even_real"]) + 1j*np.array(right_snap["data"]["even_imag"])
+        right_odd = np.array(right_snap["data"]["odd_real"]) + 1j*np.array(right_snap["data"]["odd_imag"])
+        right_data = np.empty((right_even.size + right_odd.size,), dtype=np.complex)
+        right_data[0::2] = right_even
+        right_data[1::2] = right_odd
+        for i in range(0, right_data.size/spectrum_size, spectrum_size):
+            right_accum += right_data[i:i+spectrum_size]
 
     plt.plot(np.abs(left_accum), label="left")
     plt.plot(np.abs(right_accum), label="right")
