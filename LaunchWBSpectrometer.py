@@ -46,7 +46,7 @@ coarseFFTShiftMask = 2047 #shift all stages.
 
 #How many FFT frames to accumulate for. Note: This is inversely proportional to output rate and time resolution and directly proportional to size of output numbers
 # 39062 is just a touch short of 1 second.
-accumulationLength = 39062
+accumulationLength = 390625
 digitalGain = 256
 ADCAttenuation = 4
 
@@ -226,7 +226,7 @@ def plot_histogram(data):
     plt.plot(hist[1][:-1], hist[0])
     plt.show()
 
-def plot_requant_snap(number_of_snaps = 1, spectrum_size=1024):
+def plot_requant_snap(number_of_snaps = 1, db_plot=False, spectrum_size=1024):
     fpga.registers.requant_snap_ctrl.write(we=True)
 
     left_accum = np.empty((spectrum_size,), dtype=np.complex)
@@ -251,8 +251,12 @@ def plot_requant_snap(number_of_snaps = 1, spectrum_size=1024):
         for i in range(0, right_data.size/spectrum_size, spectrum_size):
             right_accum += right_data[i:i+spectrum_size]
 
-    plt.plot(np.abs(left_accum), label="left")
-    plt.plot(np.abs(right_accum), label="right")
+    if db_plot:
+        plt.plot(20*np.log10(np.abs(left_accum)), label="left")
+        plt.plot(20*np.log10(np.abs(right_accum)), label="right")
+    else:
+        plt.plot(np.abs(left_accum), label="left")
+        plt.plot(np.abs(right_accum), label="right")
     plt.legend()
 
     plt.show()
