@@ -249,8 +249,8 @@ def plot_requant_snap(spectrum_size=1024):
     for i in range(0, right_data.size/spectrum_size, spectrum_size):
         right_accum += right_data[i:i+spectrum_size]
 
-    plt.plot(left_accum, label="left")
-    plt.plot(right_accum, label="right")
+    plt.plot(np.abs(left_accum), label="left")
+    plt.plot(np.abs(right_accum), label="right")
     plt.legend()
 
     plt.show()
