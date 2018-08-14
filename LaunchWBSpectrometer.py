@@ -23,7 +23,7 @@ def exit_clean():
 #Gateware to be loaded.a bof should be on the ROACH and a fpg file in the same directory as this script
 #gateware = 'wb_spectrometer_16_2016_Feb_24_1041' # Older one, linearity problem.
 #gateware = "wb_spectrometer" # Newer one, still not linear but high-end problem fixed.
-gateware = "wb_spectrometer_2_2018_Aug_03_1934"
+gateware = "wb_spectrometer_2018_Aug_13_1723"
 
 #Directory on the ROACH NFS filesystem where bof files are kept. (Assumes this is hosted on this machine.)
 roachGatewareDir = '/srv/roachfs/fs/boffiles'
@@ -225,3 +225,33 @@ def plot_histogram(data):
     hist = np.histogram(data, bins=256)
     plt.plot(hist[1][:-1], hist[0])
     plt.show()
+
+def plot_requant_snap(spectrum_size=1024):
+    fpga.registers.requant_snap_ctrl.write(we=True)
+
+    left_snap = fpga.snapshots.requant_left_snap.read()
+    left_even = np.array(left_snap["data"]["even_real"]) + 1j*np.array(left_snap["data"]["even_imag"])
+    left_odd = np.array(left_snap["data"]["odd_real"]) + 1j*np.array(left_snap["data"]["odd_imag"])
+    left_data = np.empty((left_even.size + left_odd.size,), dtype=np.complex)
+    left_data[0::2] = left_even
+    left_data[1::2] = left_odd
+    left_accum = np.empty((spectrum_size,), dtype=np.complex)
+    for i in range(0, left_data.size/spectrum_size, spectrum_size):
+        left_accum += left_data[i:i+spectrum_size]
+
+    right_snap = fpga.snapshots.requant_right_snap.read()
+    right_even = np.array(right_snap["data"]["even_real"]) + 1j*np.array(right_snap["data"]["even_imag"])
+    right_odd = np.array(right_snap["data"]["odd_real"]) + 1j*np.array(right_snap["data"]["odd_imag"])
+    right_data = np.empty((right_even.size + right_odd.size,), dtype=np.complex)
+    right_data[0::2] = right_even
+    right_data[1::2] = right_odd
+    right_accum = np.empty((spectrum_size,), dtype=np.complex)
+    for i in range(0, right_data.size/spectrum_size, spectrum_size):
+        right_accum += right_data[i:i+spectrum_size]
+
+    plt.plot(left_accum, label="left")
+    plt.plot(right_accum, label="right")
+    plt.legend()
+
+    plt.show()
+
