@@ -21,9 +21,7 @@ def exit_clean():
 ##### Variables to be set ###########
 
 #Gateware to be loaded.a bof should be on the ROACH and a fpg file in the same directory as this script
-#gateware = 'wb_spectrometer_16_2016_Feb_24_1041' # Older one, linearity problem.
-#gateware = "wb_spectrometer" # Newer one, still not linear but high-end problem fixed.
-gateware = "wb_spectrometer_2018_Aug_13_1723"
+gateware = 'wb_spectrometer'
 
 #Directory on the ROACH NFS filesystem where bof files are kept. (Assumes this is hosted on this machine.)
 roachGatewareDir = '/srv/roachfs/fs/boffiles'
@@ -45,15 +43,13 @@ interpacketLength_cycles = 16
 coarseFFTShiftMask = 2047 #shift all stages.
 
 #How many FFT frames to accumulate for. Note: This is inversely proportional to output rate and time resolution and directly proportional to size of output numbers
-# 39062 is just a touch short of 1 second.
-accumulationLength = 390625
-digitalGain = 256
-ADCAttenuation = 4
+accumulationLength = 195312 # 195312 = ~0.5 s
 
-#Threshold detection for ADC to ensure input signal is in the required range
-lowerADCThreshold = 1000
-upperADCThreshold = 100000
-ADCThresholdAccumLength = 1000 #Note accumulation is done with every 4th sample at 800 MSps
+# Digital gain to add before requantising
+digitalGain = 32 # 32x
+
+# ADC Attenuation level
+ADCAttenuation = 10 # 10 = 5.0 dB
 
 ####################################
 
@@ -72,10 +68,8 @@ print ' Data size per packet:		', dataSizePerPacket_B, ' bytes'
 print ' Interpacket length		', interpacketLength_cycles, ' cycles'
 print ' FFT shift mask			', coarseFFTShiftMask
 print ' Accumulation length		', accumulationLength, '(', 2048 * accumulationLength / 800e3, ' ms integration per output )'
+print ' Digital Gain                    ', digitalGain
 print ' ADC attenuation			', ADCAttenuation, '(', ADCAttenuation / 2, ' dB )'
-print ' ADC upper threshold		', lowerADCThreshold, '(', 10 * np.log10( powerPerADCValue_mW * lowerADCThreshold / ADCThresholdAccumLength ), ' dBm at ADC input )'
-print ' ADC lower threshold		', upperADCThreshold, '(', 10 * np.log10( powerPerADCValue_mW * upperADCThreshold / ADCThresholdAccumLength ), ' dBm at ADC input )'
-print ' ADC thres accumulation length	', ADCThresholdAccumLength, '(', ADCThresholdAccumLength / 50, ' dB )'
 print '---------------------------'
 
 print '\n---------------------------'
@@ -144,14 +138,8 @@ fpga.registers.adc1_atten.write_int(ADCAttenuation)
 print '\n---------------------------'
 print 'Enabling digital gain.'
 #Enable the ADCs
-fpga.registers.digital_gain.write_int(digitalGain)
-fpga.registers.digital_gain.write_int(digitalGain)
-
-print '\n---------------------------'
-print 'Setting up ADC threshold notification.'
-fpga.registers.upper_adc_threshold.write_int(upperADCThreshold)
-fpga.registers.lower_adc_threshold.write_int(lowerADCThreshold)
-fpga.registers.adc_threshold_acc_length.write_int(ADCThresholdAccumLength)
+fpga.registers.digital_gain.write(reg=digitalGain)
+fpga.registers.digital_gain.write(reg=digitalGain)
 
 print '\n---------------------------'
 print 'Configuring noise diode.'
@@ -226,30 +214,57 @@ def plot_histogram(data):
     plt.plot(hist[1][:-1], hist[0])
     plt.show()
 
-def plot_requant_snap(number_of_snaps = 1, db_plot=False, spectrum_size=1024):
-    fpga.registers.requant_snap_ctrl.write(we=True)
+def plot_requant_snap(accumulation_length=1, db_plot=False, spectrum_size=1024):
+    # Snapshot is 2^13 deep, contains 2 samples (even and odd) per "row".
+    snap_depth = 2**14
+    number_of_snaps = accumulation_length / (snap_depth/spectrum_size)
+    extra_spectra = accumulation_length % (snap_depth/spectrum_size)  # For the ones which don't evenly divide into a snap size.
+
+    # 0 for Requant Left
+    fpga.registers.stokes_requant_snap_sel.write(reg=0)
 
     left_accum = np.empty((spectrum_size,), dtype=np.complex)
-    right_accum = np.empty((spectrum_size,), dtype=np.complex)
-
     for snap_no in range(number_of_snaps):
-        left_snap = fpga.snapshots.requant_left_snap_ss.read()
-        left_even = np.array(left_snap["data"]["even_real"]) + 1j*np.array(left_snap["data"]["even_imag"])
-        left_odd = np.array(left_snap["data"]["odd_real"]) + 1j*np.array(left_snap["data"]["odd_imag"])
+        left_snap = fpga.snapshots.requant_stokes_snap_ss.read(man_trig=True)
+        left_even = np.array(left_snap["data"]["data0"]) + 1j*np.array(left_snap["data"]["data1"])
+        left_odd = np.array(left_snap["data"]["data2"]) + 1j*np.array(left_snap["data"]["data3"])
         left_data = np.empty((left_even.size + left_odd.size,), dtype=np.complex)
         left_data[0::2] = left_even
         left_data[1::2] = left_odd
         for i in range(0, left_data.size/spectrum_size, spectrum_size):
             left_accum += left_data[i:i+spectrum_size]
 
-        right_snap = fpga.snapshots.requant_right_snap_ss.read()
-        right_even = np.array(right_snap["data"]["even_real"]) + 1j*np.array(right_snap["data"]["even_imag"])
-        right_odd = np.array(right_snap["data"]["odd_real"]) + 1j*np.array(right_snap["data"]["odd_imag"])
+    left_snap = fpga.snapshots.requant_stokes_snap_ss.read(man_trig=True)
+    left_even = np.array(left_snap["data"]["data0"]) + 1j*np.array(left_snap["data"]["data1"])
+    left_odd = np.array(left_snap["data"]["data2"]) + 1j*np.array(left_snap["data"]["data3"])
+    left_data = np.empty((left_even.size + left_odd.size,), dtype=np.complex)
+    left_data[0::2] = left_even
+    left_data[1::2] = left_odd
+    for i in range(0, extra_spectra*spectrum_size, spectrum_size):
+        left_accum += left_data[i:i+spectrum_size]
+
+    # 1 for Requant Right
+    fpga.registers.stokes_requant_snap_sel.write(reg=1)
+
+    right_accum = np.empty((spectrum_size,), dtype=np.complex)
+    for snap_no in range(number_of_snaps):
+        right_snap = fpga.snapshots.requant_right_snap_ss.read(man_trig=True)
+        right_even = np.array(right_snap["data"]["data0"]) + 1j*np.array(right_snap["data"]["data1"])
+        right_odd = np.array(right_snap["data"]["data2"]) + 1j*np.array(right_snap["data"]["data3"])
         right_data = np.empty((right_even.size + right_odd.size,), dtype=np.complex)
         right_data[0::2] = right_even
         right_data[1::2] = right_odd
         for i in range(0, right_data.size/spectrum_size, spectrum_size):
             right_accum += right_data[i:i+spectrum_size]
+
+    right_snap = fpga.snapshots.requant_stokes_snap_ss.read(man_trig=True)
+    right_even = np.array(right_snap["data"]["data0"]) + 1j*np.array(right_snap["data"]["data1"])
+    right_odd = np.array(right_snap["data"]["data2"]) + 1j*np.array(right_snap["data"]["data3"])
+    right_data = np.empty((right_even.size + right_odd.size,), dtype=np.complex)
+    right_data[0::2] = right_even
+    right_data[1::2] = right_odd
+    for i in range(0, extra_spectra*spectrum_size, spectrum_size):
+        right_accum += right_data[i:i+spectrum_size]
 
     if db_plot:
         plt.plot(20*np.log10(np.abs(left_accum)), label="left")
@@ -258,6 +273,59 @@ def plot_requant_snap(number_of_snaps = 1, db_plot=False, spectrum_size=1024):
         plt.plot(np.abs(left_accum), label="left")
         plt.plot(np.abs(right_accum), label="right")
     plt.legend()
-
     plt.show()
 
+
+def plot_stokeslr_snap(accumulation_length=1, db_plot=False, spectrum_size=1024):
+    # Snapshot is 2^13 deep, contains 2 samples (even and odd) per "row".
+    snap_depth = 2**14
+    number_of_snaps = accumulation_length / (snap_depth/spectrum_size)
+    extra_spectra = accumulation_length % (snap_depth/spectrum_size)  # For the ones which don't evenly divide into a snap size.
+
+    # 2 for Stokes Left/right
+    fpga.registers.stokes_requant_snap_sel.write(reg=2)
+
+    left_accum = np.empty((spectrum_size,), dtype=np.complex)
+    right_accum = np.empty((spectrum_size,), dtype=np.complex)
+
+    for snap_no in range(number_of_snaps):
+        snap = fpga.snapshots.requant_stokes_snap_ss.read(man_trig=True)
+        left_even = np.array(left_snap["data"]["data0"])
+        left_odd = np.array(left_snap["data"]["data1"])
+        left_data = np.empty((left_even.size + left_odd.size,), dtype=np.complex)
+        left_data[0::2] = left_even
+        left_data[1::2] = left_odd
+        for i in range(0, left_data.size/spectrum_size, spectrum_size):
+            left_accum += left_data[i:i+spectrum_size]
+
+        right_even = np.array(snap["data"]["data2"])
+        right_odd = np.array(snap["data"]["data3"])
+        right_data = np.empty((right_even.size + right_odd.size,), dtype=np.complex)
+        right_data[0::2] = right_even
+        right_data[1::2] = right_odd
+        for i in range(0, right_data.size/spectrum_size, spectrum_size):
+            right_accum += right_data[i:i+spectrum_size]
+
+    snap = fpga.snapshots.requant_stokes_snap_ss.read(man_trig=True)
+    left_even = np.array(snap["data"]["data0"])
+    left_odd = np.array(snap["data"]["data1"])
+    left_data = np.empty((left_even.size + left_odd.size,), dtype=np.complex)
+    left_data[0::2] = left_even
+    left_data[1::2] = left_odd
+    right_even = np.array(snap["data"]["data2"])
+    right_odd = np.array(snap["data"]["data3"])
+    right_data = np.empty((right_even.size + right_odd.size,), dtype=np.complex)
+    right_data[0::2] = right_even
+    right_data[1::2] = right_odd
+    for i in range(0, extra_spectra*spectrum_size, spectrum_size):
+        left_accum += left_data[i:i+spectrum_size]
+        right_accum += right_data[i:i+spectrum_size]
+
+    if db_plot:
+        plt.plot(20*np.log10(np.abs(left_accum)), label="left")
+        plt.plot(20*np.log10(np.abs(right_accum)), label="right")
+    else:
+        plt.plot(np.abs(left_accum), label="left")
+        plt.plot(np.abs(right_accum), label="right")
+    plt.legend()
+    plt.show()
