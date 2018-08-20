@@ -17,8 +17,7 @@ def exit_clean():
     sys.exit()
 
 ##### Variables to be set ###########
-#gateware = "pulsar_channeliser"
-gateware = "pulsar_channeliser_2018_Apr_17_1353"
+gateware = "pulsar_channeliser"
 
 #Directory on the ROACH NFS filesystem where bof files are kept. (Assumes this is hosted on this machine.)
 roachGatewareDir = '/srv/roachfs/fs/boffiles'
@@ -65,7 +64,7 @@ if not( roachGatewareDir.endswith('/') ):
 
 print 'Copying bof file', gateware + '.bof', 'to NFS (' +  roachGatewareDir + ')'
 copyfile(gateware + '.bof', roachGatewareDir + gateware + '.bof')
-os.chmod(roachGatewareDir + gateware + '.bof', stat.S_IXUSR | stat.S_IXGRP |  stat.S_IXOTH)
+os.chmod(roachGatewareDir + gateware + '.bof', stat.S_IXUSR | stat.S_IXGRP |  stat.S_IXOTH | stat.S_IRUSR | stat.S_IWUSR)
 
 print '\n---------------------------'
 print 'Connecting to FPGA...'
@@ -133,7 +132,7 @@ print "\n---------------------------"
 print "Enabling sync with next PPS..."
 if UseSelfPPS:
     print "WARNING: USING SELF-GENERATED 1PPS SIGNAL. IF AN EXTERNAL 1PPS IS AVAILABLE IT WILL BE IGNORED."
-fpga.registers.sync_ctrl.write(enable_sync=True, use_self_pps=UseSelfPPS)
+fpga.registers.sync_ctrl.write(arm=True, self_pps=UseSelfPPS)
 sys.stdout.flush()
 
 print "\n#############################################"
