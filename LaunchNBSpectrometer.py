@@ -39,15 +39,15 @@ dataSizePerPacket_B = 1024
 interpacketLength_cycles = 16
 
 #FFT shift (With the number in binary each bit represents whether the corresponding stage should right shift once.There are 2048 stages)
-coarseFFTShiftMask = 0
+coarseFFTShiftMask = 4
 
 #Select course FFT output channel.
-coarseFFTChannelSelect = 40
+coarseFFTChannelSelect = 140
 
 #How many FFT frames to accumulate for. Note: This is inversely proportional to output rate and time resolution and directly proportional to size of output numbers
-accumulationLength = 10
-digitalGain = 2
-ADCAttenuation = 63
+accumulationLength = 200
+digitalGain = 128
+ADCAttenuation = 10
 
 #Threshold detection for ADC to ensure input signal is in the required range
 lowerADCThreshold = 0
@@ -145,8 +145,8 @@ fpga.registers.adc1_atten.write_int(ADCAttenuation)
 print '\n---------------------------'
 print 'Enabling digital gain.'
 #Enable the ADCs
-fpga.registers.digital_gain.write_int(digitalGain)
-fpga.registers.digital_gain.write_int(digitalGain)
+fpga.registers.digital_gain.write(reg=digitalGain)
+fpga.registers.digital_gain.write(reg=digitalGain)
 
 #print '\n---------------------------'
 #print 'Setting up ADC threshold notification.'
@@ -203,3 +203,6 @@ else:
 
 print '\n---------------------------'
 print 'Done'
+
+
+fpga.registers.manual_sync.write(reg="pulse")

@@ -46,7 +46,7 @@ coarseFFTShiftMask = 2047 #shift all stages.
 accumulationLength = 195312 # 195312 = ~0.5 s
 
 # Digital gain to add before requantising
-digitalGain = 32 # 32x
+digitalGain = 128
 
 # ADC Attenuation level
 ADCAttenuation = 10 # 10 = 5.0 dB
