@@ -20,7 +20,7 @@ def exit_clean():
 
 #Gateware to be loaded.a bof should be on the ROACH and a fpg file in the same directory as this script
 #gateware = 'nb_spectrometer_16_2016_Feb_25_1125'
-gateware = 'nb_spectrometer'
+gateware = 'nb_spectrometer_2019_Feb_20_1047'
 
 #Directory on the ROACH NFS filesystem where bof files are kept. (Assumes this is hosted on this machine.)
 roachGatewareDir = '/srv/roachfs/fs/boffiles'
