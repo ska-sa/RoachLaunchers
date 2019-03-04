@@ -39,14 +39,14 @@ dataSizePerPacket_B = 1024
 interpacketLength_cycles = 16
 
 #FFT shift (With the number in binary each bit represents whether the corresponding stage should right shift once.There are 2048 stages)
-coarseFFTShiftMask = 4
+coarseFFTShiftMask = 0b101110101
 
 #Select course FFT output channel.
 coarseFFTChannelSelect = 140
 
 #How many FFT frames to accumulate for. Note: This is inversely proportional to output rate and time resolution and directly proportional to size of output numbers
 accumulationLength = 200
-digitalGain = 128
+digitalGain = 0.125
 ADCAttenuation = 10
 
 #Threshold detection for ADC to ensure input signal is in the required range
