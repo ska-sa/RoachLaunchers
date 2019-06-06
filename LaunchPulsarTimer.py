@@ -34,7 +34,7 @@ tGbEDestinationPort = 60000
 ADCAttenuation = 10
 FFTShift = 10 # Until further notice.
 RequantGain = 2
-StartChan = 14
+StartChan = 0
 TVGEnable = True
 UseSelfPPS = True
 

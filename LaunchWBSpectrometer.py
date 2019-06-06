@@ -27,7 +27,7 @@ gateware = 'wb_spectrometer'
 roachGatewareDir = '/srv/roachfs/fs/boffiles'
 
 #ROACH PowerPC Network:
-strRoachIP = 'catseye'
+strRoachIP = 'horsehead'
 roachKATCPPort = 7147
 
 #TenGbE Network:
@@ -49,7 +49,7 @@ accumulationLength = 195312 # 195312 = ~0.5 s
 digitalGain = 128
 
 # ADC Attenuation level
-ADCAttenuation = 10 # 10 = 5.0 dB
+ADCAttenuation = 0 # 10 = 5.0 dB
 
 ####################################
 
@@ -195,13 +195,21 @@ print 'Done'
 fpga.registers.manual_sync.write(reg="pulse")
 
 
-def get_adc_snap():
+def get_adc_snap(pol=0):
     fpga.registers.adc_snap_ctrl.write(we=True)
     adc_snap = fpga.snapshots.adc_snap_ss.read(man_trig=True)
-    data0 = np.array(adc_snap["data"]["adc_data0_0"])
-    data1 = np.array(adc_snap["data"]["adc_data0_1"])
-    data2 = np.array(adc_snap["data"]["adc_data0_2"])
-    data3 = np.array(adc_snap["data"]["adc_data0_3"])
+    if pol == 0:
+        data0 = np.array(adc_snap["data"]["adc_data0_0"])
+        data1 = np.array(adc_snap["data"]["adc_data0_1"])
+        data2 = np.array(adc_snap["data"]["adc_data0_2"])
+        data3 = np.array(adc_snap["data"]["adc_data0_3"])
+    elif pol == 1:
+        data0 = np.array(adc_snap["data"]["adc_data1_0"])
+        data1 = np.array(adc_snap["data"]["adc_data1_1"])
+        data2 = np.array(adc_snap["data"]["adc_data1_2"])
+        data3 = np.array(adc_snap["data"]["adc_data1_3"])
+    else:
+        return -1
     data = np.empty((data0.size + data1.size + data2.size + data3.size,), dtype=data0.dtype)
     data[0::4] = data0
     data[1::4] = data1
