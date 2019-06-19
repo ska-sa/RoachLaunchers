@@ -17,18 +17,15 @@ def exit_clean():
     sys.exit()
 
 ##### Variables to be set ###########
-gateware = "pulsar_channeliser"
-
-#Directory on the ROACH NFS filesystem where bof files are kept. (Assumes this is hosted on this machine.)
-roachGatewareDir = '/srv/roachfs/fs/boffiles'
+gateware = "pulchan_r2_2019_Jun_06_1554.fpg"
 
 #ROACH PowerPC Network:
-strRoachIP = 'catseye'
+strRoachIP = '10.0.2.64'
 roachKATCPPort = 7147
 
 #TenGbE Network:
-strTGbEDestinationIPBandTop = '10.0.0.4'
-strTGbEDestinationIPBandBtm = '10.0.0.4'
+strTGbEDestinationIPBandTop = '10.0.3.1'
+strTGbEDestinationIPBandBtm = '10.0.3.1'
 tGbEDestinationPort = 60000
 
 ADCAttenuation = 10
@@ -53,18 +50,9 @@ print ' FPGA gateware:			    ', gateware
 print ' FFT Shift mask:             ', FFTShift
 print ' Requantiser gain:           ', RequantGain
 print ' Start from channel:         ', StartChan
-print ' Gateware directory		    ', roachGatewareDir
 print ' Destination 10GbE IP (Top):	', strTGbEDestinationIPBandTop, '( ', tGbEDestinationIPTop, ' )'
 print ' Destination 10GbE IP (Btm):	', strTGbEDestinationIPBandBtm, '( ', tGbEDestinationIPBtm, ' )'
 print '---------------------------'
-
-print '\n---------------------------'
-if not( roachGatewareDir.endswith('/') ):
-  roachGatewareDir += '/'
-
-print 'Copying bof file', gateware + '.bof', 'to NFS (' +  roachGatewareDir + ')'
-copyfile(gateware + '.bof', roachGatewareDir + gateware + '.bof')
-os.chmod(roachGatewareDir + gateware + '.bof', stat.S_IXUSR | stat.S_IXGRP |  stat.S_IXOTH | stat.S_IRUSR | stat.S_IWUSR)
 
 print '\n---------------------------'
 print 'Connecting to FPGA...'
@@ -78,9 +66,7 @@ else:
 
 print 'Flashing gateware...'
 
-fpga.system_info['program_filename'] = '%s.bof' % gateware #bof needs to be on the roachfs for this to work
-fpga.program()
-fpga.get_system_information('%s.fpg' % gateware)
+fpga.upload_to_ram_and_program(gateware)
 sys.stdout.flush()
 
 time.sleep(2)
@@ -149,7 +135,7 @@ time.sleep(2)
 #Check clock frequency
 clkFreq = fpga.registers.clk_frequency.read_uint()
 print 'Clock frequency is: ', clkFreq, ' Hz'
-if(clkFreq == 200000000):
+if(clkFreq == 256000000):
   print 'Frequency correct.'
 else:
   print 'ERROR! Clock frequency is not correct. Check 10 MHz reference and PPS connections.'

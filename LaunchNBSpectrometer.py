@@ -18,19 +18,15 @@ def exit_clean():
 
 ##### Variables to be set ###########
 
-#Gateware to be loaded.a bof should be on the ROACH and a fpg file in the same directory as this script
-#gateware = 'nb_spectrometer_16_2016_Feb_25_1125'
-gateware = 'nb_spectrometer_2019_Feb_22_1505'
-
-#Directory on the ROACH NFS filesystem where bof files are kept. (Assumes this is hosted on this machine.)
-roachGatewareDir = '/srv/roachfs/fs/boffiles'
+#Gateware to be loaded. fpg file in the same directory as this script
+gateware = 'nb_spect_r2_2019_Jun_14_1105.fpg'
 
 #ROACH PowerPC Network:
-strRoachIP = 'catseye'
+strRoachIP = '10.0.2.64'
 roachKATCPPort = 7147
 
 #TenGbE Network:
-strTGbEDestinationIP = '10.0.0.4'
+strTGbEDestinationIP = '10.0.3.1'
 tGbEDestinationPort = 60000
 
 #Set frame data length in bytes must be submultiple of 16384 ( 1024 frequencies * 2 for complex * 2 for 2 channels with each value a 4 byte uint32_t. Also excludes 8 bytes header of each frame)
@@ -49,11 +45,6 @@ accumulationLength = 200
 digitalGain = 0.125
 ADCAttenuation = 10
 
-#Threshold detection for ADC to ensure input signal is in the required range
-lowerADCThreshold = 0
-upperADCThreshold = 2^32 - 1
-ADCThresholdAccumLength = 1000 #Note accumulation is done with every 4th sample at 800 MSps
-
 
 ####################################
 
@@ -66,25 +57,13 @@ print '\n---------------------------'
 print 'Configuration:'
 print '---------------------------'
 print ' FPGA gateware:			', gateware
-print ' Gateware directory		', roachGatewareDir
 print ' Destination 10GbE host:		', strTGbEDestinationIP, '( ', tGbEDestinationIP, ' )'
 print ' Data size per packet:		', dataSizePerPacket_B, ' bytes'
 print ' Interpacket length		', interpacketLength_cycles, ' cycles'
 print ' FFT shift mask			', coarseFFTShiftMask
 print ' Accumulation length		', accumulationLength, '(', 2048 * accumulationLength / 800e3, ' ms integration per output )'
 print ' ADC attenuation			', ADCAttenuation, '(', ADCAttenuation / 2, ' dB )'
-print ' ADC upper threshold		', lowerADCThreshold, '(', 10 * numpy.log10( powerPerADCValue_mW * lowerADCThreshold / ADCThresholdAccumLength ), ' dBm at ADC input )'
-print ' ADC lower threshold		', upperADCThreshold, '(', 10 * numpy.log10( powerPerADCValue_mW * upperADCThreshold / ADCThresholdAccumLength ), ' dBm at ADC input )'
-print ' ADC thres accumulation length	', ADCThresholdAccumLength, '(', ADCThresholdAccumLength / 50, ' dB )'
 print '---------------------------'
-
-print '\n---------------------------'
-if not( roachGatewareDir.endswith('/') ):
-  roachGatewareDir += '/'
-
-print 'Copying bof file', gateware + '.bof', 'to NFS (' +  roachGatewareDir + ')'
-copyfile(gateware + '.bof', roachGatewareDir + gateware + '.bof')
-os.chmod(roachGatewareDir + gateware + '.bof', stat.S_IXUSR | stat.S_IXGRP |  stat.S_IXOTH | stat.S_IRUSR | stat.S_IWUSR)
 
 print '\n---------------------------'
 print 'Connecting to FPGA...'
@@ -98,9 +77,7 @@ else:
 
 print 'Flashing gateware'
 
-fpga.system_info['program_filename'] = '%s.bof' % gateware #bof needs to be on the roachfs for this to work
-fpga.program()
-fpga.get_system_information('%s.fpg' % gateware)
+fpga.upload_to_ram_and_program(gateware)
 sys.stdout.flush()
 
 print '\n---------------------------'
@@ -156,8 +133,8 @@ fpga.registers.digital_gain.write(reg=digitalGain)
 
 print '\n---------------------------'
 print 'Configuring noise diode'
-fpga.registers.noise_diode_on_length.write_int(2000) #Set noise diode duty-cycle in accumulation windows (note values can't be 0 will default to 1)
-fpga.registers.noise_diode_off_length.write_int(4000)
+fpga.registers.noise_diode_on_length.write_int(2) #Set noise diode duty-cycle in accumulation windows (note values can't be 0 will default to 1)
+fpga.registers.noise_diode_off_length.write_int(40)
 
 fpga.registers.noise_diode_duty_cycle_en.write_int(1) #Noise diode mode: always on (0) or duty-cycle (1) as set above.
 fpga.registers.noise_diode_en.write_int(1) #Global enabling or disabling of noise diode
@@ -168,7 +145,7 @@ print 'Setting RTC and signal board to resync on next PPS pulse...'
 #Check clock frequency
 clkFreq = fpga.registers.clk_frequency.read_uint()
 print 'Clock frequency is: ', clkFreq, ' Hz'
-if(clkFreq == 200000000):
+if(clkFreq == 256000000):
   print 'Frequency correct.'
 else:
   print '!! Error clock frequency is not correct. Check 10 MHz reference and PPS and that Valon is locked to Ext-Ref !!'

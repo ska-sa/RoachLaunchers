@@ -20,18 +20,15 @@ def exit_clean():
 
 ##### Variables to be set ###########
 
-#Gateware to be loaded.a bof should be on the ROACH and a fpg file in the same directory as this script
-gateware = 'wb_spectrometer'
-
-#Directory on the ROACH NFS filesystem where bof files are kept. (Assumes this is hosted on this machine.)
-roachGatewareDir = '/srv/roachfs/fs/boffiles'
+#Gateware to be loaded. fpg file in the same directory as this script
+gateware = 'wb_spect_r2_2019_Jun_06_1550.fpg'
 
 #ROACH PowerPC Network:
-strRoachIP = 'horsehead'
+strRoachIP = '10.0.2.64'
 roachKATCPPort = 7147
 
 #TenGbE Network:
-strTGbEDestinationIP = '10.0.0.4'
+strTGbEDestinationIP = '10.0.3.1'
 tGbEDestinationPort = 60000
 
 #Set frame data length in bytes must be submultiple of 16384 ( 1024 frequencies * 2 for complex * 2 for 2 channels with each value a 4 byte uint32_t. Also excludes 8 bytes header of each frame)
@@ -43,6 +40,7 @@ interpacketLength_cycles = 16
 coarseFFTShiftMask = 2047 #shift all stages.
 
 #How many FFT frames to accumulate for. Note: This is inversely proportional to output rate and time resolution and directly proportional to size of output numbers
+#TODO this will change now that the sampling frequency has changed...
 accumulationLength = 195312 # 195312 = ~0.5 s
 
 # Digital gain to add before requantising
@@ -56,13 +54,10 @@ ADCAttenuation = 0 # 10 = 5.0 dB
 packedIP = socket.inet_aton(strTGbEDestinationIP)
 tGbEDestinationIP = struct.unpack("!L", packedIP)[0]
 
-powerPerADCValue_mW = pow(1.9 / pow(2, 8), 2) / 50 * 1000 #V*V/R to get power with 1.9V across 8 bits into 50 Ohm impedance.
-
 print '\n---------------------------'
 print 'Configuration:'
 print '---------------------------'
 print ' FPGA gateware:			', gateware
-print ' Gateware directory		', roachGatewareDir
 print ' Destination 10GbE host:		', strTGbEDestinationIP, '( ', tGbEDestinationIP, ' )'
 print ' Data size per packet:		', dataSizePerPacket_B, ' bytes'
 print ' Interpacket length		', interpacketLength_cycles, ' cycles'
@@ -71,14 +66,6 @@ print ' Accumulation length		', accumulationLength, '(', 2048 * accumulationLeng
 print ' Digital Gain                    ', digitalGain
 print ' ADC attenuation			', ADCAttenuation, '(', ADCAttenuation / 2, ' dB )'
 print '---------------------------'
-
-print '\n---------------------------'
-if not( roachGatewareDir.endswith('/') ):
-  roachGatewareDir += '/'
-
-print 'Copying bof file', gateware + '.bof', 'to NFS (' +  roachGatewareDir + ')'
-copyfile(gateware + '.bof', roachGatewareDir + gateware + '.bof')
-os.chmod(roachGatewareDir + gateware + '.bof', stat.S_IXUSR | stat.S_IXGRP |  stat.S_IXOTH | stat.S_IRUSR | stat.S_IWUSR)
 
 print '\n---------------------------'
 print 'Connecting to FPGA...'
@@ -92,9 +79,7 @@ else:
 
 print 'Flashing gateware'
 
-fpga.system_info['program_filename'] = '%s.bof' % gateware #bof needs to be on the roachfs for this to work
-fpga.program()
-fpga.get_system_information('%s.fpg' % gateware)
+fpga.upload_to_ram_and_program(gateware)
 sys.stdout.flush()
 
 print '\n---------------------------'
@@ -155,7 +140,7 @@ print 'Setting RTC and signal board to resync on next PPS pulse...'
 #Check clock frequency
 clkFreq = fpga.registers.clk_frequency.read_uint()
 print 'Clock frequency is: ', clkFreq, ' Hz'
-if(clkFreq == 200000000):
+if(clkFreq == 256000000):
   print 'Frequency correct.'
 else:
   print '!! Error clock frequency is not correct. Check 10 MHz reference and PPS and that Valon is locked to Ext-Ref !!'
