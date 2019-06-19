@@ -21,7 +21,7 @@ def exit_clean():
 ##### Variables to be set ###########
 
 #Gateware to be loaded. fpg file in the same directory as this script
-gateware = 'wb_spect_r2_2019_Jun_06_1550.fpg'
+gateware = 'wb_spect_r2_2019_Jun_19_1206.fpg'
 
 #ROACH PowerPC Network:
 strRoachIP = '10.0.2.64'
