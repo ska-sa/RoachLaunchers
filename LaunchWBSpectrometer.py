@@ -21,7 +21,7 @@ def exit_clean():
 ##### Variables to be set ###########
 
 #Gateware to be loaded. fpg file in the same directory as this script
-gateware = 'wb_spect_r2_2019_Jun_19_1206.fpg'
+gateware = 'wb_spect_r2_2019_Sep_10_1540.fpg'
 
 #ROACH PowerPC Network:
 strRoachIP = '10.0.2.64'
@@ -37,17 +37,19 @@ dataSizePerPacket_B = 1024
 interpacketLength_cycles = 16
 
 #FFT shift (With the number in binary each bit represents whether the corresponding stage should right shift once.There are 2048 stages)
-coarseFFTShiftMask = 2047 #shift all stages.
+coarseFFTShiftMask = 2047
 
 #How many FFT frames to accumulate for. Note: This is inversely proportional to output rate and time resolution and directly proportional to size of output numbers
 #TODO this will change now that the sampling frequency has changed...
-accumulationLength = 195312 # 195312 = ~0.5 s
+accumulationLength = 250000 # 250000 = 0.5s at 1024 MS/s
 
 # Digital gain to add before requantising
-digitalGain = 128
+digitalGain = 0.125
 
 # ADC Attenuation level
-ADCAttenuation = 0 # 10 = 5.0 dB
+ADCAttenuation = 40 # 10 = 5.0 dB
+
+manual_sync = True
 
 ####################################
 
@@ -132,7 +134,7 @@ fpga.registers.noise_diode_on_length.write_int(125) #Set noise diode duty-cycle 
 fpga.registers.noise_diode_off_length.write_int(7375)
 
 fpga.registers.noise_diode_duty_cycle_en.write_int(1) #Noise diode mode: always on (0) or duty-cycle (1) as set above.
-fpga.registers.noise_diode_en.write_int(1) #Global enabling or disabling of noise diode
+fpga.registers.noise_diode_en.write_int(0) #Global enabling or disabling of noise diode
 
 print '\n---------------------------'
 print 'Setting RTC and signal board to resync on next PPS pulse...'
@@ -158,6 +160,9 @@ fpga.registers.time_msb.write_int(timeMSB)
 fpga.registers.sync_next_pps.write_int(1)
 fpga.registers.sync_next_pps.write_int(0)
 
+if manual_sync:
+    fpga.registers.manual_sync.write(reg="pulse")
+
 print 'Setting RTC time to    ', timeNextPPS, ' us'
 print 'Waiting 1 s to allow for PPS strobe...'
 time.sleep(1)
@@ -177,7 +182,6 @@ else:
 print '\n---------------------------'
 print 'Done'
 
-fpga.registers.manual_sync.write(reg="pulse")
 
 
 def get_adc_snap(pol=0):
