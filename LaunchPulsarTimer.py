@@ -17,7 +17,7 @@ def exit_clean():
     sys.exit()
 
 ##### Variables to be set ###########
-gateware = "pulchan_r2_2019_Jun_06_1554.fpg"
+gateware = "pulchan_r2_2019_Sep_25_1507.fpg"
 
 #ROACH PowerPC Network:
 strRoachIP = '10.0.2.64'
@@ -31,7 +31,7 @@ tGbEDestinationPort = 60000
 ADCAttenuation = 10
 FFTShift = 10 # Until further notice.
 RequantGain = 2
-StartChan = 0
+StartChan = 2
 TVGEnable = True
 UseSelfPPS = True
 
@@ -120,6 +120,7 @@ if UseSelfPPS:
     print "WARNING: USING SELF-GENERATED 1PPS SIGNAL. IF AN EXTERNAL 1PPS IS AVAILABLE IT WILL BE IGNORED."
 fpga.registers.sync_ctrl.write(arm=True, self_pps=UseSelfPPS)
 sys.stdout.flush()
+
 
 print "\n#############################################"
 print "#############################################"
