@@ -21,7 +21,7 @@ def exit_clean():
 ##### Variables to be set ###########
 
 #Gateware to be loaded. fpg file in the same directory as this script
-gateware = 'wb_spect_r2_2019_Sep_10_1540.fpg'
+gateware = 'wb_spect_r2_2019_Oct_04_1132.fpg'
 
 #ROACH PowerPC Network:
 strRoachIP = '10.0.2.64'
@@ -41,7 +41,8 @@ coarseFFTShiftMask = 2047
 
 #How many FFT frames to accumulate for. Note: This is inversely proportional to output rate and time resolution and directly proportional to size of output numbers
 #TODO this will change now that the sampling frequency has changed...
-accumulationLength = 250000 # 250000 = 0.5s at 1024 MS/s
+#accumulationLength = 250000 # 250000 = 0.5s at 1024 MS/s
+accumulationLength = 2500 # 250000 = 0.5s at 1024 MS/s
 
 # Digital gain to add before requantising
 digitalGain = 0.125
