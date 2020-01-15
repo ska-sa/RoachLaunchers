@@ -27,7 +27,7 @@ gateware = 'wb_spectrometer'
 roachGatewareDir = '/srv/roachfs/fs/boffiles'
 
 #ROACH PowerPC Network:
-strRoachIP = 'horsehead'
+strRoachIP = 'catseye'
 roachKATCPPort = 7147
 
 #TenGbE Network:
@@ -112,7 +112,7 @@ time.sleep(2) # Wait 2 seconds for 10GbE link to come up
 bTGbELinkUp = bool(fpga.read_int('tgbe0_linkup'))
 if not bTGbELinkUp:
 	print 'Link not detected on 10 GbE port 0. Make sure that the cable is connected to port 0 on the ROACH and to a computer NIC or switch on the other end. Exiting.\n'
-	exit_clean()
+	#exit_clean()
 
 fpga.registers.eth_data_size_per_packet.write_int(dataSizePerPacket_B)
 fpga.registers.eth_interpacket_length.write_int(interpacketLength_cycles)
@@ -143,8 +143,8 @@ fpga.registers.digital_gain.write(reg=digitalGain)
 
 print '\n---------------------------'
 print 'Configuring noise diode.'
-fpga.registers.noise_diode_on_length.write_int(125) #Set noise diode duty-cycle in accumulation windows (note values can't be 0 will default to 1)
-fpga.registers.noise_diode_off_length.write_int(7375)
+fpga.registers.noise_diode_on_length.write_int(1) #Set noise diode duty-cycle in accumulation windows (note values can't be 0 will default to 1)
+fpga.registers.noise_diode_off_length.write_int(1) # One second on, 59 seconds off.
 
 fpga.registers.noise_diode_duty_cycle_en.write_int(1) #Noise diode mode: always on (0) or duty-cycle (1) as set above.
 fpga.registers.noise_diode_en.write_int(1) #Global enabling or disabling of noise diode
