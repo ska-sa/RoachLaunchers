@@ -20,18 +20,15 @@ def exit_clean():
 
 ##### Variables to be set ###########
 
-#Gateware to be loaded.a bof should be on the ROACH and a fpg file in the same directory as this script
-gateware = 'wb_spectrometer'
-
-#Directory on the ROACH NFS filesystem where bof files are kept. (Assumes this is hosted on this machine.)
-roachGatewareDir = '/srv/roachfs/fs/boffiles'
+#Gateware to be loaded. fpg file in the same directory as this script
+gateware = 'wb_spect_r2_2019_Oct_04_1132.fpg'
 
 #ROACH PowerPC Network:
-strRoachIP = 'catseye'
+strRoachIP = '10.0.2.64'
 roachKATCPPort = 7147
 
 #TenGbE Network:
-strTGbEDestinationIP = '10.0.0.4'
+strTGbEDestinationIP = '10.0.3.1'
 tGbEDestinationPort = 60000
 
 #Set frame data length in bytes must be submultiple of 16384 ( 1024 frequencies * 2 for complex * 2 for 2 channels with each value a 4 byte uint32_t. Also excludes 8 bytes header of each frame)
@@ -40,29 +37,30 @@ dataSizePerPacket_B = 1024
 interpacketLength_cycles = 16
 
 #FFT shift (With the number in binary each bit represents whether the corresponding stage should right shift once.There are 2048 stages)
-coarseFFTShiftMask = 2047 #shift all stages.
+coarseFFTShiftMask = 2047
 
 #How many FFT frames to accumulate for. Note: This is inversely proportional to output rate and time resolution and directly proportional to size of output numbers
-accumulationLength = 195312 # 195312 = ~0.5 s
+#TODO this will change now that the sampling frequency has changed...
+#accumulationLength = 250000 # 250000 = 0.5s at 1024 MS/s
+accumulationLength = 2500 # 250000 = 0.5s at 1024 MS/s
 
 # Digital gain to add before requantising
-digitalGain = 128
+digitalGain = 0.125
 
 # ADC Attenuation level
-ADCAttenuation = 0 # 10 = 5.0 dB
+ADCAttenuation = 40 # 10 = 5.0 dB
+
+manual_sync = True
 
 ####################################
 
 packedIP = socket.inet_aton(strTGbEDestinationIP)
 tGbEDestinationIP = struct.unpack("!L", packedIP)[0]
 
-powerPerADCValue_mW = pow(1.9 / pow(2, 8), 2) / 50 * 1000 #V*V/R to get power with 1.9V across 8 bits into 50 Ohm impedance.
-
 print '\n---------------------------'
 print 'Configuration:'
 print '---------------------------'
 print ' FPGA gateware:			', gateware
-print ' Gateware directory		', roachGatewareDir
 print ' Destination 10GbE host:		', strTGbEDestinationIP, '( ', tGbEDestinationIP, ' )'
 print ' Data size per packet:		', dataSizePerPacket_B, ' bytes'
 print ' Interpacket length		', interpacketLength_cycles, ' cycles'
@@ -71,14 +69,6 @@ print ' Accumulation length		', accumulationLength, '(', 2048 * accumulationLeng
 print ' Digital Gain                    ', digitalGain
 print ' ADC attenuation			', ADCAttenuation, '(', ADCAttenuation / 2, ' dB )'
 print '---------------------------'
-
-print '\n---------------------------'
-if not( roachGatewareDir.endswith('/') ):
-  roachGatewareDir += '/'
-
-print 'Copying bof file', gateware + '.bof', 'to NFS (' +  roachGatewareDir + ')'
-copyfile(gateware + '.bof', roachGatewareDir + gateware + '.bof')
-os.chmod(roachGatewareDir + gateware + '.bof', stat.S_IXUSR | stat.S_IXGRP |  stat.S_IXOTH | stat.S_IRUSR | stat.S_IWUSR)
 
 print '\n---------------------------'
 print 'Connecting to FPGA...'
@@ -92,9 +82,7 @@ else:
 
 print 'Flashing gateware'
 
-fpga.system_info['program_filename'] = '%s.bof' % gateware #bof needs to be on the roachfs for this to work
-fpga.program()
-fpga.get_system_information('%s.fpg' % gateware)
+fpga.upload_to_ram_and_program(gateware)
 sys.stdout.flush()
 
 print '\n---------------------------'
@@ -147,7 +135,7 @@ fpga.registers.noise_diode_on_length.write_int(1) #Set noise diode duty-cycle in
 fpga.registers.noise_diode_off_length.write_int(1) # One second on, 59 seconds off.
 
 fpga.registers.noise_diode_duty_cycle_en.write_int(1) #Noise diode mode: always on (0) or duty-cycle (1) as set above.
-fpga.registers.noise_diode_en.write_int(1) #Global enabling or disabling of noise diode
+fpga.registers.noise_diode_en.write_int(0) #Global enabling or disabling of noise diode
 
 print '\n---------------------------'
 print 'Setting RTC and signal board to resync on next PPS pulse...'
@@ -155,7 +143,7 @@ print 'Setting RTC and signal board to resync on next PPS pulse...'
 #Check clock frequency
 clkFreq = fpga.registers.clk_frequency.read_uint()
 print 'Clock frequency is: ', clkFreq, ' Hz'
-if(clkFreq == 200000000):
+if(clkFreq == 256000000):
   print 'Frequency correct.'
 else:
   print '!! Error clock frequency is not correct. Check 10 MHz reference and PPS and that Valon is locked to Ext-Ref !!'
@@ -172,6 +160,9 @@ fpga.registers.time_msb.write_int(timeMSB)
 #This should be the last statement of configuration. This will bring the board out of reset state on the next PPS and begin streaming data
 fpga.registers.sync_next_pps.write_int(1)
 fpga.registers.sync_next_pps.write_int(0)
+
+if manual_sync:
+    fpga.registers.manual_sync.write(reg="pulse")
 
 print 'Setting RTC time to    ', timeNextPPS, ' us'
 print 'Waiting 1 s to allow for PPS strobe...'
@@ -192,7 +183,6 @@ else:
 print '\n---------------------------'
 print 'Done'
 
-fpga.registers.manual_sync.write(reg="pulse")
 
 
 def get_adc_snap(pol=0):
