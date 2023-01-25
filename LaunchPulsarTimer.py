@@ -121,12 +121,9 @@ if UseSelfPPS:
 fpga.registers.sync_ctrl.write(arm=True, self_pps=UseSelfPPS)
 sys.stdout.flush()
 
-
-print "\n#############################################"
-print "#############################################"
-print "### Note: ROACH initialised at UNIX time: ###"
-print "### ", int(time.time()) + 1, " ###"
-print "#############################################"
+print "\n---------------------------"
+print "Priming ROACH2 scratchpad with system t0."
+fpga.registers.sys_scratchpad.write(reg=int(time.time() + 1))
 
 
 print "\n---------------------------"
