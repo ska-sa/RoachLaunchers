@@ -42,7 +42,8 @@ coarseFFTShiftMask = 2047
 #How many FFT frames to accumulate for. Note: This is inversely proportional to output rate and time resolution and directly proportional to size of output numbers
 #TODO this will change now that the sampling frequency has changed...
 #accumulationLength = 250000 # 250000 = 0.5s at 1024 MS/s
-accumulationLength = 2500 # 250000 = 0.5s at 1024 MS/s
+accumulationLength = 25000
+#accumulationLength = 2500 # 250000 = 0.5s at 1024 MS/s
 
 # Digital gain to add before requantising
 digitalGain = 0.125
