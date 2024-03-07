@@ -22,7 +22,7 @@ def exit_clean():
 gateware = 'nb_spect_r2_1024_2019_Oct_04_1328.fpg'
 
 #ROACH PowerPC Network:
-strRoachIP = '10.0.2.64'
+strRoachIP = '10.0.2.43'
 roachKATCPPort = 7147
 
 #TenGbE Network:

@@ -9,7 +9,7 @@ import os.path
 from shutil import copyfile
 import stat
 import numpy as np
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
 def exit_clean():
     try:
@@ -24,7 +24,7 @@ def exit_clean():
 gateware = 'wb_spect_r2_2019_Oct_04_1132.fpg'
 
 #ROACH PowerPC Network:
-strRoachIP = '10.0.2.64'
+strRoachIP = '10.0.2.43'
 roachKATCPPort = 7147
 
 #TenGbE Network:
@@ -51,7 +51,7 @@ digitalGain = 0.125
 # ADC Attenuation level
 ADCAttenuation = 40 # 10 = 5.0 dB
 
-manual_sync = True
+manual_sync = False
 
 ####################################
 

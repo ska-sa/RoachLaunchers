@@ -20,7 +20,7 @@ def exit_clean():
 gateware = "pulchan_r2_2019_Sep_25_1507.fpg"
 
 #ROACH PowerPC Network:
-strRoachIP = '10.0.2.64'
+strRoachIP = '10.0.2.43'
 roachKATCPPort = 7147
 
 #TenGbE Network:
